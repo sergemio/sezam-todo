@@ -68,6 +68,12 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .done-card .card-title{text-decoration:line-through}
 .btn-done{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;background:none;color:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
 .btn-done:hover{border-color:var(--green);color:var(--green);background:rgba(22,163,106,.08)}
+.btn-urgent{position:absolute;top:8px;right:34px;width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;background:none;color:transparent;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
+.btn-urgent:hover{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.08)}
+.btn-urgent.is-urgent{border-color:var(--red);background:var(--red);color:#fff}
+.card.card-urgent{border-left:3px solid var(--red)}
+.urgent-mirror{opacity:.85}
+.urgent-mirror .card-origin{font-size:.6rem;color:var(--text2);margin-top:4px;font-style:italic}
 .card{position:relative}
 
 /* Drop zone */
@@ -165,6 +171,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <input type="text" id="fTags" placeholder="Tech, Marketing, Business...">
     <label>Colonne</label>
     <select id="fColSelect"></select>
+    <label style="margin-top:14px;display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem"><input type="checkbox" id="fUrgent" style="width:auto"> Marquer comme urgent</label>
     <div class="modal-actions">
       <button class="btn btn-danger" id="btnDel" style="display:none" onclick="deleteCard()">Supprimer</button>
       <div style="flex:1"></div>
@@ -198,14 +205,70 @@ function save(){
 }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+function buildCard(card,col,isMirror){
+  const c=document.createElement('div');
+  c.className='card'+(card.done?' done-card':'')+(card.urgent?' card-urgent':'')+(isMirror?' urgent-mirror':'');
+  c.draggable=!isMirror;
+  c.dataset.id=card.id;
+  const tagHtml=(card.tags||[]).map(t=>{
+    const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
+    return `<span class="tag ${cls}">${esc(t)}</span>`;
+  }).join('');
+  const doneBtn=col.id!=='done'&&!isMirror?`<button class="btn-done" data-id="${card.id}" data-col="${col.id}" title="Marquer comme fait">&#10003;</button>`:'';
+  const urgentBtn=col.id!=='done'?`<button class="btn-urgent${card.urgent?' is-urgent':''}" title="Urgent">!</button>`:'';
+  const originTag=isMirror?`<div class="card-origin">${esc(col.title)}</div>`:'';
+  c.innerHTML=`
+    ${doneBtn}${!isMirror?urgentBtn:''}
+    <div class="card-title">${esc(card.title)}</div>
+    <div class="card-desc">${esc(card.desc)}</div>
+    ${tagHtml?`<div class="card-tags">${tagHtml}</div>`:''}
+    ${originTag}
+  `;
+  const db=c.querySelector('.btn-done');
+  if(db) db.addEventListener('click',e=>{e.stopPropagation();markDone(card.id,col.id)});
+  const ub=c.querySelector('.btn-urgent');
+  if(ub) ub.addEventListener('click',e=>{e.stopPropagation();toggleUrgent(card.id,col.id)});
+  c.addEventListener('click',()=>openModal(card.id,col.id));
+  if(!isMirror){
+    c.addEventListener('dragstart',e=>{dragCard=card;dragColId=col.id;c.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+    c.addEventListener('dragend',()=>{c.classList.remove('dragging');dragCard=null;dragColId=null;document.querySelectorAll('.drop-zone').forEach(d=>d.remove())});
+  }
+  return c;
+}
+
 function render(){
   updateStats();
   const board=document.getElementById('board');
   board.innerHTML='';
-  // Populate column select
   const sel=document.getElementById('fColSelect');
   sel.innerHTML=data.columns.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
 
+  // Build urgent view column first
+  const urgentCards=[];
+  data.columns.forEach(col=>{
+    if(col.id==='done') return;
+    col.cards.forEach(card=>{
+      if(card.urgent) urgentCards.push({card,col});
+    });
+  });
+
+  const urgentDiv=document.createElement('div');
+  urgentDiv.className='column';
+  urgentDiv.innerHTML=`
+    <div class="col-header">
+      <span class="col-icon">🔴</span>
+      <span class="col-title">Urgent</span>
+      <span class="col-count">${urgentCards.length}</span>
+    </div>
+    <div class="col-cards"></div>
+  `;
+  const urgentContainer=urgentDiv.querySelector('.col-cards');
+  urgentCards.forEach(({card,col})=>{
+    urgentContainer.appendChild(buildCard(card,col,true));
+  });
+  board.appendChild(urgentDiv);
+
+  // Regular columns
   data.columns.forEach((col,ci)=>{
     if(ci>0 && col.id==='done'){
       const sep=document.createElement('div');sep.className='section-sep';board.appendChild(sep);
@@ -223,9 +286,7 @@ function render(){
     `;
     const container=div.querySelector('.col-cards');
 
-    // Drop events
     container.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';
-      const afterEl=getDragAfter(container,e.clientY);
       const ghost=container.querySelector('.drop-zone');
       if(!ghost){const dz=document.createElement('div');dz.className='drop-zone';container.appendChild(dz)}
     });
@@ -250,31 +311,18 @@ function render(){
     });
 
     col.cards.forEach(card=>{
-      const c=document.createElement('div');
-      c.className='card'+(card.done?' done-card':'');
-      c.draggable=true;
-      c.dataset.id=card.id;
-      const tagHtml=(card.tags||[]).map(t=>{
-        const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
-        return `<span class="tag ${cls}">${esc(t)}</span>`;
-      }).join('');
-      const doneBtn=col.id!=='done'?`<button class="btn-done" data-id="${card.id}" data-col="${col.id}" title="Marquer comme fait">&#10003;</button>`:'';
-      c.innerHTML=`
-        ${doneBtn}
-        <div class="card-title">${esc(card.title)}</div>
-        <div class="card-desc">${esc(card.desc)}</div>
-        ${tagHtml?`<div class="card-tags">${tagHtml}</div>`:''}
-      `;
-      const db=c.querySelector('.btn-done');
-      if(db) db.addEventListener('click',e=>{e.stopPropagation();markDone(card.id,col.id)});
-      c.addEventListener('click',()=>openModal(card.id,col.id));
-      c.addEventListener('dragstart',e=>{dragCard=card;dragColId=col.id;c.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
-      c.addEventListener('dragend',()=>{c.classList.remove('dragging');dragCard=null;dragColId=null;document.querySelectorAll('.drop-zone').forEach(d=>d.remove())});
-      container.appendChild(c);
+      container.appendChild(buildCard(card,col,false));
     });
 
     board.appendChild(div);
   });
+}
+
+function toggleUrgent(cardId,colId){
+  const col=data.columns.find(c=>c.id===colId);
+  const card=col.cards.find(c=>c.id===cardId);
+  card.urgent=!card.urgent;
+  save();render();
 }
 
 function markDone(cardId,colId){
@@ -302,7 +350,7 @@ function getDragAfter(container,y){
 
 function updateStats(){
   const all=data.columns.flatMap(c=>c.cards);
-  const urgent=data.columns.find(c=>c.id==='urgent')?.cards.length||0;
+  const urgent=all.filter(c=>c.urgent&&!c.done).length;
   const watch=data.columns.find(c=>c.id==='watch')?.cards.length||0;
   const done=data.columns.find(c=>c.id==='done')?.cards.length||0;
   const progress=all.length-urgent-watch-done;
@@ -326,6 +374,7 @@ function openModal(cardId,colId){
     document.getElementById('fDesc').value=card.desc;
     document.getElementById('fTags').value=(card.tags||[]).join(', ');
     document.getElementById('fColSelect').value=colId;
+    document.getElementById('fUrgent').checked=!!card.urgent;
   } else {
     document.getElementById('fId').value='';
     document.getElementById('fCol').value=colId;
@@ -333,6 +382,7 @@ function openModal(cardId,colId){
     document.getElementById('fDesc').value='';
     document.getElementById('fTags').value='';
     document.getElementById('fColSelect').value=colId;
+    document.getElementById('fUrgent').checked=false;
   }
   bg.classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
@@ -355,12 +405,13 @@ function saveCard(){
     const [card]=origCol.cards.splice(idx,1);
     card.title=title;card.desc=desc;card.tags=tags;
     card.done=newColId==='done';
+    card.urgent=document.getElementById('fUrgent').checked;
     const newCol=data.columns.find(c=>c.id===newColId);
     newCol.cards.push(card);
   } else {
     const maxId=Math.max(0,...data.columns.flatMap(c=>c.cards.map(cd=>cd.id)));
     const col=data.columns.find(c=>c.id===newColId);
-    col.cards.push({id:maxId+1,title,desc,tags,done:newColId==='done'});
+    col.cards.push({id:maxId+1,title,desc,tags,done:newColId==='done',urgent:document.getElementById('fUrgent').checked});
   }
   save();closeModal();render();
 }
