@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sezam&Co — Action Board</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--surface:#fff;--border:#e2e5ea;--text:#1a1a2e;--text2:#6b7280;
+  --accent:#3b82f6;--red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;--green:#16a34a;--purple:#9333ea;
+  --font:'DM Sans',system-ui,sans-serif;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text)}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* Top bar */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.topbar h1{font-size:1.15rem;font-weight:700;white-space:nowrap}
+.topbar .stats{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+.topbar .chip{font-size:.72rem;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.chip-red{background:#fef2f2;color:var(--red)}
+.chip-yellow{background:#fefce8;color:var(--yellow)}
+.chip-blue{background:#eff6ff;color:var(--accent)}
+.chip-green{background:#f0fdf4;color:var(--green)}
+.topbar .actions{display:flex;gap:6px}
+.btn{background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:8px;font-size:.78rem;font-family:var(--font);font-weight:500;cursor:pointer;transition:.15s;color:var(--text)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#2563eb}
+
+/* Board */
+.board{display:flex;gap:14px;padding:16px 20px;overflow-x:auto;flex:1;align-items:flex-start}
+.board::-webkit-scrollbar{height:8px}
+.board::-webkit-scrollbar-track{background:transparent}
+.board::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+
+/* Column */
+.column{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-width:290px;max-width:320px;flex-shrink:0;display:flex;flex-direction:column;max-height:calc(100vh - 80px);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.col-header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.col-icon{font-size:1rem}
+.col-title{font-size:.85rem;font-weight:700;flex:1}
+.col-count{background:var(--bg);color:var(--text2);font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:10px}
+.col-add{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text2);padding:2px 6px;border-radius:6px;transition:.15s}
+.col-add:hover{background:var(--bg);color:var(--accent)}
+.col-cards{padding:8px;overflow-y:auto;flex:1}
+.col-cards::-webkit-scrollbar{width:4px}
+.col-cards::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+
+/* Card */
+.card{background:var(--bg);border:1px solid transparent;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:grab;transition:.15s;position:relative}
+.card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.card.dragging{opacity:.4;transform:rotate(2deg)}
+.card-title{font-size:.82rem;font-weight:600;line-height:1.3;margin-bottom:4px}
+.card-desc{font-size:.72rem;color:var(--text2);line-height:1.4}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:.6rem;padding:2px 7px;border-radius:10px;font-weight:600}
+.tag-urgent{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.tag-seo{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+.tag-business{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.tag-marketing{background:#fefce8;color:#ca8a04;border:1px solid #fef08a}
+.tag-tech{background:#faf5ff;color:#9333ea;border:1px solid #e9d5ff}
+.tag-money{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.tag-watch{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+.tag-done{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.done-card{opacity:.45}
+.done-card .card-title{text-decoration:line-through}
+.btn-done{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;background:none;color:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
+.btn-done:hover{border-color:var(--green);color:var(--green);background:rgba(22,163,106,.08)}
+.card{position:relative}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--accent);border-radius:8px;min-height:40px;margin-bottom:6px;background:rgba(59,130,246,.04);transition:.15s}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.modal h2{font-size:1rem;font-weight:700;margin-bottom:16px}
+.modal label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:4px;margin-top:12px}
+.modal label:first-of-type{margin-top:0}
+.modal input,.modal select,.modal textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:.85rem;color:var(--text);outline:none;transition:.15s}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal textarea{resize:vertical;min-height:60px}
+.modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.btn-danger{color:var(--red);border-color:var(--red)}
+.btn-danger:hover{background:#fef2f2}
+
+/* Section separator */
+.section-sep{min-width:2px;background:var(--border);border-radius:2px;flex-shrink:0;align-self:stretch;margin:16px 0}
+
+/* Comparison bar */
+.comparison{background:#fff;border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0;overflow-x:auto}
+.comparison .label{font-size:.7rem;font-weight:600;color:var(--text2);white-space:nowrap}
+.comparison .bar-item{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.comparison .dot{width:8px;height:8px;border-radius:50%}
+
+/* Tablet */
+@media(max-width:1024px){
+  .board{gap:10px;padding:12px}
+  .column{min-width:250px;max-width:280px}
+}
+
+/* Mobile */
+@media(max-width:700px){
+  body{overflow:auto}
+  .topbar{padding:10px 12px;flex-wrap:wrap;gap:8px}
+  .topbar h1{font-size:1rem}
+  .topbar .stats{order:3;width:100%;justify-content:flex-start;gap:4px}
+  .topbar .chip{font-size:.65rem;padding:3px 8px}
+  .topbar .actions{gap:4px}
+  .topbar .actions .btn{padding:5px 10px;font-size:.72rem}
+  .board{flex-direction:column;padding:10px;gap:10px;overflow-x:hidden;align-items:stretch}
+  .column{min-width:unset;max-width:unset;width:100%;max-height:none}
+  .col-cards{max-height:none}
+  .section-sep{min-width:unset;min-height:2px;width:100%;margin:8px 0}
+  .comparison{flex-wrap:wrap;gap:8px;padding:10px 12px}
+  .modal{margin:10px;max-width:calc(100vw - 20px)}
+  .card{padding:12px 14px}
+  .card-title{font-size:.88rem}
+  .card-desc{font-size:.76rem}
+  .btn-done{width:26px;height:26px;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Sezam&Co</h1>
+  <div class="stats">
+    <span class="chip chip-red" id="statUrgent"></span>
+    <span class="chip chip-yellow" id="statProgress"></span>
+    <span class="chip chip-blue" id="statWatch"></span>
+    <span class="chip chip-green" id="statDone"></span>
+  </div>
+  <div class="actions">
+    <button class="btn" onclick="exportData()">Export</button>
+    <button class="btn" onclick="document.getElementById('impFile').click()">Import</button>
+    <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="comparison">
+  <span class="label">Sur 100€ de ventes :</span>
+  <span class="bar-item"><span class="dot" style="background:var(--green)"></span>Delicity 93,50€</span>
+  <span class="bar-item"><span class="dot" style="background:var(--accent)"></span>Uber (sans promo) 63€</span>
+  <span class="bar-item"><span class="dot" style="background:var(--yellow)"></span>Uber (avec promo) 56€</span>
+  <span class="bar-item"><span class="dot" style="background:var(--red)"></span>Deliveroo 56€</span>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">Nouvelle carte</h2>
+    <input type="hidden" id="fId">
+    <input type="hidden" id="fCol">
+    <label>Titre</label>
+    <input type="text" id="fTitle">
+    <label>Description</label>
+    <textarea id="fDesc"></textarea>
+    <label>Tags (separes par virgule)</label>
+    <input type="text" id="fTags" placeholder="Tech, Marketing, Business...">
+    <label>Colonne</label>
+    <select id="fColSelect"></select>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btnDel" style="display:none" onclick="deleteCard()">Supprimer</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCard()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TAG_CLASSES={urgent:'tag-urgent',seo:'tag-seo',business:'tag-business',marketing:'tag-marketing',tech:'tag-tech',money:'tag-money',watch:'tag-watch',done:'tag-done',deliveroo:'tag-business',uber:'tag-business',delicity:'tag-business',gbp:'tag-seo','google ads':'tag-seo','priorite #1':'tag-urgent',suivi:'tag-watch'};
+
+const FB_URL='https://sezdo-1-default-rtdb.firebaseio.com/todo';
+
+let data;
+let dragCard=null, dragColId=null;
+
+async function load(){
+  try{
+    const res=await fetch(FB_URL+'.json');
+    if(res.ok) data=await res.json();
+    else throw new Error();
+    if(!data||!data.columns) data={columns:[]};
+  }catch{
+    data={columns:[]};
+  }
+}
+function save(){
+  fetch(FB_URL+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .catch(()=>{});
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function render(){
+  updateStats();
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  // Populate column select
+  const sel=document.getElementById('fColSelect');
+  sel.innerHTML=data.columns.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
+
+  data.columns.forEach((col,ci)=>{
+    if(ci>0 && col.id==='done'){
+      const sep=document.createElement('div');sep.className='section-sep';board.appendChild(sep);
+    }
+    const div=document.createElement('div');
+    div.className='column';
+    div.innerHTML=`
+      <div class="col-header">
+        <span class="col-icon">${col.icon}</span>
+        <span class="col-title">${esc(col.title)}</span>
+        <span class="col-count">${col.cards.length}</span>
+        <button class="col-add" onclick="openModal(null,'${col.id}')" title="Ajouter">+</button>
+      </div>
+      <div class="col-cards" data-col="${col.id}"></div>
+    `;
+    const container=div.querySelector('.col-cards');
+
+    // Drop events
+    container.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';
+      const afterEl=getDragAfter(container,e.clientY);
+      const ghost=container.querySelector('.drop-zone');
+      if(!ghost){const dz=document.createElement('div');dz.className='drop-zone';container.appendChild(dz)}
+    });
+    container.addEventListener('dragleave',e=>{if(!container.contains(e.relatedTarget)){const g=container.querySelector('.drop-zone');if(g)g.remove()}});
+    container.addEventListener('drop',e=>{
+      e.preventDefault();
+      const g=container.querySelector('.drop-zone');if(g)g.remove();
+      if(!dragCard)return;
+      const fromCol=data.columns.find(c=>c.id===dragColId);
+      const toCol=col;
+      const cardIdx=fromCol.cards.findIndex(c=>c.id===dragCard.id);
+      const [card]=fromCol.cards.splice(cardIdx,1);
+      const afterEl=getDragAfter(container,e.clientY);
+      if(afterEl){
+        const afterId=+afterEl.dataset.id;
+        const insertIdx=toCol.cards.findIndex(c=>c.id===afterId);
+        toCol.cards.splice(insertIdx,0,card);
+      } else {
+        toCol.cards.push(card);
+      }
+      save();render();
+    });
+
+    col.cards.forEach(card=>{
+      const c=document.createElement('div');
+      c.className='card'+(card.done?' done-card':'');
+      c.draggable=true;
+      c.dataset.id=card.id;
+      const tagHtml=(card.tags||[]).map(t=>{
+        const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
+        return `<span class="tag ${cls}">${esc(t)}</span>`;
+      }).join('');
+      const doneBtn=col.id!=='done'?`<button class="btn-done" data-id="${card.id}" data-col="${col.id}" title="Marquer comme fait">&#10003;</button>`:'';
+      c.innerHTML=`
+        ${doneBtn}
+        <div class="card-title">${esc(card.title)}</div>
+        <div class="card-desc">${esc(card.desc)}</div>
+        ${tagHtml?`<div class="card-tags">${tagHtml}</div>`:''}
+      `;
+      const db=c.querySelector('.btn-done');
+      if(db) db.addEventListener('click',e=>{e.stopPropagation();markDone(card.id,col.id)});
+      c.addEventListener('click',()=>openModal(card.id,col.id));
+      c.addEventListener('dragstart',e=>{dragCard=card;dragColId=col.id;c.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+      c.addEventListener('dragend',()=>{c.classList.remove('dragging');dragCard=null;dragColId=null;document.querySelectorAll('.drop-zone').forEach(d=>d.remove())});
+      container.appendChild(c);
+    });
+
+    board.appendChild(div);
+  });
+}
+
+function markDone(cardId,colId){
+  const fromCol=data.columns.find(c=>c.id===colId);
+  const doneCol=data.columns.find(c=>c.id==='done');
+  const idx=fromCol.cards.findIndex(c=>c.id===cardId);
+  const [card]=fromCol.cards.splice(idx,1);
+  card.done=true;
+  const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+  card.tags=[today];
+  doneCol.cards.unshift(card);
+  save();render();
+}
+
+function getDragAfter(container,y){
+  const cards=[...container.querySelectorAll('.card:not(.dragging)')];
+  let closest=null,closestOffset=Number.NEGATIVE_INFINITY;
+  cards.forEach(c=>{
+    const box=c.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0&&offset>closestOffset){closestOffset=offset;closest=c}
+  });
+  return closest;
+}
+
+function updateStats(){
+  const all=data.columns.flatMap(c=>c.cards);
+  const urgent=data.columns.find(c=>c.id==='urgent')?.cards.length||0;
+  const watch=data.columns.find(c=>c.id==='watch')?.cards.length||0;
+  const done=data.columns.find(c=>c.id==='done')?.cards.length||0;
+  const progress=all.length-urgent-watch-done;
+  document.getElementById('statUrgent').textContent=`${urgent} urgents`;
+  document.getElementById('statProgress').textContent=`${progress} en cours`;
+  document.getElementById('statWatch').textContent=`${watch} a surveiller`;
+  document.getElementById('statDone').textContent=`${done} fait`;
+}
+
+function openModal(cardId,colId){
+  const bg=document.getElementById('modalBg');
+  const isEdit=cardId!==null;
+  document.getElementById('modalTitle').textContent=isEdit?'Modifier':'Nouvelle carte';
+  document.getElementById('btnDel').style.display=isEdit?'':'none';
+  if(isEdit){
+    const col=data.columns.find(c=>c.id===colId);
+    const card=col.cards.find(c=>c.id===cardId);
+    document.getElementById('fId').value=card.id;
+    document.getElementById('fCol').value=colId;
+    document.getElementById('fTitle').value=card.title;
+    document.getElementById('fDesc').value=card.desc;
+    document.getElementById('fTags').value=(card.tags||[]).join(', ');
+    document.getElementById('fColSelect').value=colId;
+  } else {
+    document.getElementById('fId').value='';
+    document.getElementById('fCol').value=colId;
+    document.getElementById('fTitle').value='';
+    document.getElementById('fDesc').value='';
+    document.getElementById('fTags').value='';
+    document.getElementById('fColSelect').value=colId;
+  }
+  bg.classList.add('open');
+  setTimeout(()=>document.getElementById('fTitle').focus(),100);
+}
+
+function closeModal(){document.getElementById('modalBg').classList.remove('open')}
+
+function saveCard(){
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title)return document.getElementById('fTitle').focus();
+  const desc=document.getElementById('fDesc').value.trim();
+  const tags=document.getElementById('fTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const newColId=document.getElementById('fColSelect').value;
+  const editId=document.getElementById('fId').value;
+  const origColId=document.getElementById('fCol').value;
+
+  if(editId){
+    const origCol=data.columns.find(c=>c.id===origColId);
+    const idx=origCol.cards.findIndex(c=>c.id===+editId);
+    const [card]=origCol.cards.splice(idx,1);
+    card.title=title;card.desc=desc;card.tags=tags;
+    card.done=newColId==='done';
+    const newCol=data.columns.find(c=>c.id===newColId);
+    newCol.cards.push(card);
+  } else {
+    const maxId=Math.max(0,...data.columns.flatMap(c=>c.cards.map(cd=>cd.id)));
+    const col=data.columns.find(c=>c.id===newColId);
+    col.cards.push({id:maxId+1,title,desc,tags,done:newColId==='done'});
+  }
+  save();closeModal();render();
+}
+
+function deleteCard(){
+  if(!confirm('Supprimer cette carte ?'))return;
+  const id=+document.getElementById('fId').value;
+  const colId=document.getElementById('fCol').value;
+  const col=data.columns.find(c=>c.id===colId);
+  col.cards=col.cards.filter(c=>c.id!==id);
+  save();closeModal();render();
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`sezam-todo-${new Date().toISOString().slice(0,10)}.json`;a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{data=JSON.parse(ev.target.result);save();render()}catch{alert('Fichier invalide')}};
+  r.readAsText(f);e.target.value='';
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+load().then(()=>render());
+</script>
+</body>
+</html>

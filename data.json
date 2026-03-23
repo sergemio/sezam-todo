@@ -1,0 +1,405 @@
+{
+  "columns": [
+    {
+      "id": "urgent",
+      "icon": "🔴",
+      "title": "Urgent",
+      "cards": [
+        {
+          "id": 1,
+          "title": "Mail recap associes MLF",
+          "desc": "Bilan 2025 + projections 2026 + transfert parts Timothe/Rachid. Retrouver mail precedent, comparer projections vs realite.",
+          "tags": [
+            "Business"
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Stickers Sezam&Co",
+          "desc": "Designer et imprimer. Priorite haute.",
+          "tags": [
+            "Marketing"
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Flyers — distribution locale",
+          "desc": "Creer + distribuer aux commerces/bureaux/residences rayon 300m. Combiner avec demarchage bureaux.",
+          "tags": [
+            "Marketing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "seo",
+      "icon": "🔍",
+      "title": "SEO",
+      "cards": [
+        {
+          "id": 10,
+          "title": "\"restaurant libanais lyon\" pos 9.9 — cible <6",
+          "desc": "1 030 impressions, 3 clics. Homepage optimisee (22/03), maillage interne fait. Reste : backlinks geo-ancres.",
+          "tags": [
+            "SEO",
+            "Priorite #1"
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Backlinks : HappyCurio + Le Grand Liban + Petit Fute",
+          "desc": "DA 10 actuellement. HappyCurio RDV confirme. Le Grand Liban = echange liens. Petit Fute = creer compte pro.",
+          "tags": [
+            "SEO"
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Google Ads — reevaluer le 29/03",
+          "desc": "Ad group Restaurant Libanais : 28 clics, 0 conversion. Si toujours 0 le 29/03, pauser.",
+          "tags": [
+            "Google Ads"
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Page SEO \"Formule midi Lyon 2\"",
+          "desc": "Cibler bureaux Bellecour/Cordeliers. Keywords : formule midi, dejeuner lyon 2.",
+          "tags": [
+            "SEO"
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Google Posts — 1x/semaine",
+          "desc": "Mentionner \"restaurant libanais lyon\" naturellement. Poster via Metricool.",
+          "tags": [
+            "GBP"
+          ]
+        },
+        {
+          "id": 16,
+          "title": "Corriger fautes ortho Delicity",
+          "desc": "tradionnel, moyonnaise, une notre sauce, un pate, a a facon, 27cl->30cl. + remettre dispo Garlic Chicken, Shawarma, Choco-Tahini.",
+          "tags": [
+            "Delicity"
+          ]
+        },
+        {
+          "id": 15,
+          "title": "Objectif 800 avis Google",
+          "desc": "Actuellement 745 (4.8/5). QR code sur tickets/tables.",
+          "tags": [
+            "GBP"
+          ],
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "platforms",
+      "icon": "📦",
+      "title": "Plateformes",
+      "cards": [
+        {
+          "id": 20,
+          "title": "Uber — customisations \"Mon X sans\" sur nouveaux items",
+          "desc": "Falafel Wrap, Hummus Kafta, Jebne Extra, formules Zaatar — pas encore de \"Mon X sans\".",
+          "tags": [
+            "Uber"
+          ]
+        },
+        {
+          "id": 22,
+          "title": "Remettre items dispo sur Delicity",
+          "desc": "Garlic Chicken, Shawarma, Choco-Tahini Twist = indisponibles.",
+          "tags": [
+            "Urgent",
+            "Delicity"
+          ]
+        },
+        {
+          "id": 23,
+          "title": "Reponse Etienne — eco-contribution Deliveroo",
+          "desc": "Message envoye 22/03. Eco-contribution = 7,7% du CA (vs 0,9% Uber). Pourquoi 7x plus cher ?",
+          "tags": [
+            "Deliveroo",
+            "2 600/an"
+          ]
+        },
+        {
+          "id": 24,
+          "title": "Uber Eats — ameliorer Success Score",
+          "desc": "Score \"Fair\" — cible \"Good\". Commandes inexactes 2,29% (cible <1,45%).",
+          "tags": [
+            "Uber"
+          ]
+        },
+        {
+          "id": 21,
+          "title": "Finir \"Mon Falafel Wrap sans\" — Deliveroo",
+          "desc": "Reste : Sans Pickles, Sans Radis, Sans Sauce Sezam.",
+          "tags": [
+            "Deliveroo"
+          ],
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "icon": "📣",
+      "title": "Marketing",
+      "cards": [
+        {
+          "id": 30,
+          "title": "Flyer bureau — finaliser",
+          "desc": "Mockup fait. Remplacer WhatsApp par commande Lightspeed. Ajouter QR code.",
+          "tags": [
+            "Marketing"
+          ]
+        },
+        {
+          "id": 31,
+          "title": "Demarchage bureaux — echantillons",
+          "desc": "Mini portions hummus+crackers, tournee 10h30 rayon 300m, 1x/semaine. ~25/tournee.",
+          "tags": [
+            "Marketing"
+          ]
+        },
+        {
+          "id": 32,
+          "title": "Verifier abonnements",
+          "desc": "Uniiti 60/mois — ROI ? | Adobe 14/mois — utile ? | Tabesto/Locam 323/mois — fin leasing ? | Pret bancaire 381/mois",
+          "tags": [
+            "~430/mois"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tech",
+      "icon": "💻",
+      "title": "Tech",
+      "cards": [
+        {
+          "id": 40,
+          "title": "Config upsell Tabesto",
+          "desc": "Proposer dessert/boisson en fin de commande. +2/cmd x 10 400 cmd = +20 800/an potentiel.",
+          "tags": [
+            "Business",
+            "20 800/an"
+          ]
+        },
+        {
+          "id": 41,
+          "title": "Prep Manager — push messages",
+          "desc": "Feature : message temps reel sur ecran cuisine avec son.",
+          "tags": [
+            "Tech"
+          ]
+        },
+        {
+          "id": 42,
+          "title": "Prep Manager — temperatures frigo",
+          "desc": "Feature : suivi et enregistrement des temperatures frigo dans Prep Manager.",
+          "tags": [
+            "Tech"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "watch",
+      "icon": "👁",
+      "title": "A surveiller",
+      "cards": [
+        {
+          "id": 50,
+          "title": "Promo Uber \"Free Zaatar\" — lancee 23/03",
+          "desc": "Free Zaatar (spend 20), Lun-Ven, 0,89/cmd. Check 30/03 puis 06/04. Si ROI negatif, couper.",
+          "tags": [
+            "Uber",
+            "Check 30/03"
+          ]
+        },
+        {
+          "id": 51,
+          "title": "Correler Google Ads — Delicity",
+          "desc": "Avant Ads : 0,5 cmd/jour. Apres Ads : 1 cmd/jour (x2). Verifier tendance.",
+          "tags": [
+            "Suivi"
+          ]
+        },
+        {
+          "id": 52,
+          "title": "BNP Protection — RDV 25/03 16h",
+          "desc": "RDV avec M. Monnin (agence Lyon Foch). Faire le point + nouveau produit plus competitif.",
+          "tags": [
+            "25/03"
+          ]
+        },
+        {
+          "id": 53,
+          "title": "Hemblem — surveiller prelevement apres 28/03",
+          "desc": "Resilie. Dernier prelevement 253,98 le 10/03. Verifier rien apres 28/03.",
+          "tags": [
+            "28/03",
+            "254/mois"
+          ]
+        },
+        {
+          "id": 54,
+          "title": "Desactiver promos Marketer Deliveroo",
+          "desc": "Coutent ~142/semaine = 7 400/an. ROI non prouve. Attente reponse Etienne.",
+          "tags": [
+            "Deliveroo",
+            "7 400/an"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "done",
+      "icon": "✅",
+      "title": "Fait (22-23/03)",
+      "cards": [
+        {
+          "id": 43,
+          "title": "Remboursement Wix (172,80)",
+          "desc": "Demande soumise 21/03. Reponse sous 45 jours ouvres. Checker mi-mai.\n\nReponse negative de la par de WIX",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 60,
+          "title": "Uber Eats — prix alignes sur Deliveroo",
+          "desc": "28 prix mis a jour.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 61,
+          "title": "Uber Eats — 10 items crees",
+          "desc": "Falafel Wrap/Crunch, Hummus Kafta, Jebne Extra, formules Zaatar.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 62,
+          "title": "Uber Eats — renommages + ortho",
+          "desc": "Cheesy Kafta, Cheesy Dinde, Sojok Jebne, Choco-Tahini Twist. 7 fautes corrigees.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 63,
+          "title": "Tabesto — prix alignes sur Lightspeed",
+          "desc": "10 prix corriges + renommages.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 64,
+          "title": "Lightspeed = reference prix sur place",
+          "desc": "Menu.md + Excel menu-unifie mis a jour.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 65,
+          "title": "Promo Uber \"Free Zaatar\" lancee",
+          "desc": "Free Zaatar spend 20, Lun-Ven, 23/03 au 30/04.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 66,
+          "title": "Guides automation Uber + Tabesto",
+          "desc": "Docs complets en memoire permanente.",
+          "tags": [
+            "23/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 67,
+          "title": "Menu Deliveroo — 8 corrections",
+          "desc": "Ortho, 27->30cl, renommages.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 68,
+          "title": "Analyse Uber Eats — 50 semaines",
+          "desc": "45 566 CA. Promos = -2 046 ROI negatif. \"Buy one\" desactivee.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 69,
+          "title": "Analyse Deliveroo — eco-contribution",
+          "desc": "Cout reel 43,7%. Message envoye a Etienne.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 70,
+          "title": "Pricing Delicity — refonte complete",
+          "desc": "36 prix livraison revises. Falafel Wrap cree.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 71,
+          "title": "Google Ads — optimisation",
+          "desc": "Mezze pause. \"restaurant libanais lyon\" reactive.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 72,
+          "title": "Homepage SEO + maillage interne",
+          "desc": "H2, FAQ schema, 7 pages linkent vers homepage.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        },
+        {
+          "id": 73,
+          "title": "Meta descriptions optimisees",
+          "desc": "/manouche, /livraison, /mezze.",
+          "tags": [
+            "22/03"
+          ],
+          "done": true
+        }
+      ]
+    }
+  ]
+}
