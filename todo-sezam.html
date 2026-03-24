@@ -252,22 +252,17 @@ function buildCard(card,isMirror){
   c.draggable=!isMirror;
   c.dataset.id=card.id;
 
-  // Context tags: always show category + status badge for the other dimension
-  let contextTag='';
+  // Always show category tag + status tag for the other dimension
   const cat=CATEGORIES.find(ct=>ct.id===card.category);
   const st=STATUSES.find(s=>s.id===card.status);
-  if(viewMode==='category'){
-    // In category view: show status badge
-    if(st) contextTag=`<span class="tag tag-status tag-${card.status}">${st.title}</span>`;
-  } else {
-    // In status view: show category badge
-    if(cat) contextTag=`<span class="tag ${CAT_TAG_CLASS[card.category]||'tag-business'}">${cat.title}</span>`;
-  }
+  const catTag=cat?`<span class="tag ${CAT_TAG_CLASS[card.category]||'tag-business'}">${cat.title}</span>`:'';
+  const statusTag=viewMode==='category'&&st?`<span class="tag tag-status tag-${card.status}">${st.title}</span>`:'';
 
-  const tagHtml=(card.tags||[]).map(t=>{
+  const extraTagHtml=(card.tags||[]).map(t=>{
     const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
   }).join('');
+  const tagHtml=catTag+statusTag+extraTagHtml;
 
   const doneBtn=!isDone&&!isMirror?`<button class="btn-done" title="Fait">&#10003;</button>`:'';
   const urgentBtn=!isDone?`<button class="btn-urgent${card.urgent?' is-urgent':''}" title="Urgent">!</button>`:'';
@@ -277,7 +272,7 @@ function buildCard(card,isMirror){
     ${doneBtn}${!isMirror?urgentBtn:''}
     <div class="card-title">${esc(card.title)}</div>
     <div class="card-desc">${esc(card.desc)}</div>
-    <div class="card-tags">${contextTag}${tagHtml}</div>
+    <div class="card-tags">${tagHtml}</div>
     ${originLabel}
   `;
 
