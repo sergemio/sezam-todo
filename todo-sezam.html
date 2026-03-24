@@ -282,7 +282,7 @@ function buildCard(card,isMirror){
   if(ub) ub.addEventListener('click',e=>{e.stopPropagation();toggleUrgent(card.id)});
   c.addEventListener('click',()=>openModal(card.id));
   if(!isMirror){
-    c.addEventListener('dragstart',e=>{dragCard=card;c.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+    c.addEventListener('dragstart',e=>{dragCard=card;c.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',card.id)});
     c.addEventListener('dragend',()=>{c.classList.remove('dragging');dragCard=null;document.querySelectorAll('.drop-zone').forEach(d=>d.remove())});
   }
   return c;
