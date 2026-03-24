@@ -160,8 +160,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <input type="text" id="fTitle">
     <label>Description</label>
     <textarea id="fDesc"></textarea>
-    <label>Tags (separes par virgule)</label>
-    <input type="text" id="fTags" placeholder="SEO, Uber, Marketing...">
+    <label>Tags supplementaires (separes par virgule)</label>
+    <input type="text" id="fTags" placeholder="Uber, Deliveroo, Priorite #1...">
     <div class="modal-row">
       <div>
         <label>Categorie</label>
@@ -252,13 +252,15 @@ function buildCard(card,isMirror){
   c.draggable=!isMirror;
   c.dataset.id=card.id;
 
-  // Context tag: show the OTHER dimension
+  // Context tags: always show category + status badge for the other dimension
   let contextTag='';
+  const cat=CATEGORIES.find(ct=>ct.id===card.category);
+  const st=STATUSES.find(s=>s.id===card.status);
   if(viewMode==='category'){
-    const st=STATUSES.find(s=>s.id===card.status);
+    // In category view: show status badge
     if(st) contextTag=`<span class="tag tag-status tag-${card.status}">${st.title}</span>`;
   } else {
-    const cat=CATEGORIES.find(ct=>ct.id===card.category);
+    // In status view: show category badge
     if(cat) contextTag=`<span class="tag ${CAT_TAG_CLASS[card.category]||'tag-business'}">${cat.title}</span>`;
   }
 
