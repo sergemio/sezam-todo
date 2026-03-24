@@ -85,6 +85,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .btn-urgent:hover{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.08)}
 .btn-urgent.is-urgent{border-color:var(--red);background:var(--red);color:#fff;opacity:1}
 .card.card-urgent{border-left:3px solid var(--red)}
+.btn-go{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:.6rem;font-weight:700;background:#eff6ff;color:var(--accent);border:1px solid #bfdbfe;cursor:pointer;text-decoration:none;transition:.15s;margin-left:auto}
+.btn-go:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .urgent-mirror{opacity:.85}
 .urgent-mirror .card-origin{font-size:.6rem;color:var(--text2);margin-top:4px;font-style:italic}
 
@@ -162,6 +164,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <input type="text" id="fTitle">
     <label>Description</label>
     <textarea id="fDesc"></textarea>
+    <label>URL (lien d'action)</label>
+    <input type="url" id="fUrl" placeholder="https://...">
     <label>Tags supplementaires (separes par virgule)</label>
     <input type="text" id="fTags" placeholder="Uber, Deliveroo, Priorite #1...">
     <div class="modal-row">
@@ -274,7 +278,7 @@ function buildCard(card,isMirror){
     ${doneBtn}${!isMirror?urgentBtn:''}
     <div class="card-title">${esc(card.title)}</div>
     <div class="card-desc">${esc(card.desc)}</div>
-    <div class="card-tags">${tagHtml}</div>
+    <div class="card-tags">${tagHtml}${card.url?`<a class="btn-go" href="${esc(card.url)}" target="_blank" onclick="event.stopPropagation()">Go &rarr;</a>`:''}</div>
     ${originLabel}
   `;
 
@@ -397,6 +401,7 @@ function openModal(cardId){
   document.getElementById('fCat').value=card.category;
   document.getElementById('fStatus').value=card.status;
   document.getElementById('fUrgent').checked=!!card.urgent;
+  document.getElementById('fUrl').value=card.url||'';
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>{document.getElementById('fTitle').focus();autoResize()},50);
 }
@@ -408,6 +413,7 @@ function openModalNew(groupId){
   document.getElementById('fTitle').value='';
   document.getElementById('fDesc').value='';
   document.getElementById('fTags').value='';
+  document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
   if(viewMode==='category'){
     document.getElementById('fCat').value=groupId;
@@ -430,16 +436,17 @@ function saveCard(){
   const cat=document.getElementById('fCat').value;
   const status=document.getElementById('fStatus').value;
   const urgent=document.getElementById('fUrgent').checked;
+  const url=document.getElementById('fUrl').value.trim()||null;
   const editId=document.getElementById('fId').value;
 
   if(editId){
     const card=data.cards.find(c=>c.id===+editId);
-    card.title=title;card.desc=desc;card.tags=tags;
+    card.title=title;card.desc=desc;card.tags=tags;card.url=url;
     card.category=cat;card.status=status;card.urgent=urgent;
     card.done=status==='fait';
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
-    data.cards.push({id:maxId+1,title,desc,tags,category:cat,status,urgent,done:status==='fait'});
+    data.cards.push({id:maxId+1,title,desc,tags,url,category:cat,status,urgent,done:status==='fait'});
   }
   save();closeModal();render();
 }
