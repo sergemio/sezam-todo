@@ -398,7 +398,7 @@ function openModal(cardId){
   document.getElementById('fStatus').value=card.status;
   document.getElementById('fUrgent').checked=!!card.urgent;
   document.getElementById('modalBg').classList.add('open');
-  setTimeout(()=>document.getElementById('fTitle').focus(),100);
+  setTimeout(()=>{document.getElementById('fTitle').focus();autoResize()},50);
 }
 
 function openModalNew(groupId){
@@ -451,117 +451,91 @@ function deleteCard(){
   save();closeModal();render();
 }
 
-// Custom drag & drop system
-let isDragging=false, dragEl=null, ghost=null, placeholder=null, dragStartX=0, dragStartY=0, hasMoved=false;
+// Custom drag & drop
+let isDragging=false,dragEl=null,ghost=null,placeholder=null,ghostOffX=0,ghostOffY=0,hasMoved=false;
 
 function startDrag(e,card,el){
+  if(e.button&&e.button!==0)return;
   const ev=e.touches?e.touches[0]:e;
-  dragStartX=ev.clientX;dragStartY=ev.clientY;
+  const sx=ev.clientX,sy=ev.clientY;
   dragCard=card;dragEl=el;hasMoved=false;
 
-  const onMove=e2=>{
+  function onMove(e2){
     const ev2=e2.touches?e2.touches[0]:e2;
-    const dx=ev2.clientX-dragStartX,dy=ev2.clientY-dragStartY;
-    if(!hasMoved&&Math.abs(dx)<5&&Math.abs(dy)<5)return;
     if(!hasMoved){
-      hasMoved=true;
-      isDragging=true;
-      // Create ghost
+      if(Math.abs(ev2.clientX-sx)<5&&Math.abs(ev2.clientY-sy)<5)return;
+      hasMoved=true;isDragging=true;
       const rect=el.getBoundingClientRect();
+      ghostOffX=sx-rect.left;ghostOffY=sy-rect.top;
       ghost=el.cloneNode(true);
       ghost.className='card card-ghost';
       ghost.style.width=rect.width+'px';
-      ghost.style.left=rect.left+'px';
-      ghost.style.top=rect.top+'px';
       document.body.appendChild(ghost);
-      // Create placeholder
       placeholder=document.createElement('div');
       placeholder.className='drop-placeholder';
       placeholder.style.height=rect.height+'px';
       el.style.display='none';
       el.parentNode.insertBefore(placeholder,el);
-      if(e2.cancelable)e2.preventDefault();
     }
-    ghost.style.left=(ev2.clientX-dragStartX+parseFloat(ghost.style.left||0))+'px';
-    ghost.style.top=(ev2.clientY-dragStartY+parseFloat(ghost.style.top||0))+'px';
-    dragStartX=ev2.clientX;dragStartY=ev2.clientY;
-    updatePlaceholder(ev2.clientX,ev2.clientY);
+    ghost.style.left=(ev2.clientX-ghostOffX)+'px';
+    ghost.style.top=(ev2.clientY-ghostOffY)+'px';
+    movePlaceholder(ev2.clientX,ev2.clientY);
     if(e2.cancelable)e2.preventDefault();
-  };
-
-  const onEnd=()=>{
+  }
+  function onEnd(){
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onEnd);
     document.removeEventListener('touchmove',onMove);
     document.removeEventListener('touchend',onEnd);
     if(!hasMoved){dragCard=null;dragEl=null;return;}
-    // Find which group the placeholder is in
     if(placeholder&&placeholder.parentNode){
-      const groupId=placeholder.parentNode.dataset.group;
-      if(groupId&&dragCard){
-        if(viewMode==='category'){dragCard.category=groupId;}
-        else{dragCard.status=groupId;}
-        if(groupId==='fait'){dragCard.status='fait';dragCard.urgent=false;}
+      const gid=placeholder.parentNode.dataset.group;
+      if(gid&&dragCard){
+        if(viewMode==='category')dragCard.category=gid;
+        else dragCard.status=gid;
+        if(gid==='fait'){dragCard.status='fait';dragCard.urgent=false;}
       }
     }
-    if(ghost)ghost.remove();
-    if(placeholder)placeholder.remove();
+    if(ghost)ghost.remove();if(placeholder)placeholder.remove();
     if(dragEl)dragEl.style.display='';
-    ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;hasMoved=false;
+    ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;
     save();render();
-  };
-
+    setTimeout(()=>{hasMoved=false},0);
+  }
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onEnd);
   document.addEventListener('touchmove',onMove,{passive:false});
   document.addEventListener('touchend',onEnd);
 }
 
-function updatePlaceholder(x,y){
+function movePlaceholder(x,y){
   if(!placeholder)return;
-  // Find the column under cursor
-  const cols=document.querySelectorAll('.col-cards[data-group]');
-  let targetCol=null;
-  cols.forEach(col=>{
+  let best=null,bestDist=Infinity;
+  document.querySelectorAll('.col-cards[data-group]').forEach(col=>{
     const r=col.getBoundingClientRect();
-    if(x>=r.left&&x<=r.right&&y>=r.top-50&&y<=r.bottom+50) targetCol=col;
+    const cx=r.left+r.width/2;
+    const d=Math.abs(x-cx);
+    if(d<bestDist){bestDist=d;best=col;}
   });
-  if(!targetCol){
-    // Check if near a column horizontally
-    cols.forEach(col=>{
-      const r=col.getBoundingClientRect();
-      if(x>=r.left-20&&x<=r.right+20) targetCol=col;
-    });
-  }
-  if(!targetCol)return;
-  // Find insert position
-  const cards=[...targetCol.querySelectorAll('.card')];
-  let insertBefore=null;
+  if(!best)return;
+  const cards=[...best.querySelectorAll('.card')];
+  let before=null;
   for(const c of cards){
     const r=c.getBoundingClientRect();
-    if(y<r.top+r.height/2){insertBefore=c;break;}
+    if(y<r.top+r.height/2){before=c;break;}
   }
-  if(insertBefore){
-    targetCol.insertBefore(placeholder,insertBefore);
-  } else {
-    targetCol.appendChild(placeholder);
-  }
+  if(before)best.insertBefore(placeholder,before);
+  else best.appendChild(placeholder);
 }
 
-// Prevent click after drag
-document.addEventListener('click',e=>{if(hasMoved)e.stopPropagation()},true);
+document.addEventListener('click',e=>{if(hasMoved){e.stopPropagation();e.preventDefault()}},true);
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
 // Auto-resize textarea
-const desc=document.getElementById('fDesc');
-function autoResize(){desc.style.height='auto';desc.style.height=desc.scrollHeight+'px'}
-desc.addEventListener('input',autoResize);
-new MutationObserver(()=>{if(desc.value) autoResize()}).observe(desc,{attributes:true});
-// Also resize when modal opens (value set programmatically)
-const origOpen=document.getElementById('modalBg').classList;
-const mo=new MutationObserver(()=>{if(document.getElementById('modalBg').classList.contains('open'))setTimeout(autoResize,50)});
-mo.observe(document.getElementById('modalBg'),{attributes:true,attributeFilter:['class']});
+const descEl=document.getElementById('fDesc');
+function autoResize(){descEl.style.height='auto';descEl.style.height=descEl.scrollHeight+'px'}
+descEl.addEventListener('input',autoResize);
 
 load().then(()=>render());
 </script>
