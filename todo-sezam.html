@@ -262,7 +262,11 @@ function setView(mode){
 
 function getGroups(){
   if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>cd.category===c.id&&cd.status!=='fait')}));
-  return STATUSES.map(s=>({...s,cards:data.cards.filter(cd=>cd.status===s.id)}));
+  return STATUSES.map(s=>{
+    let cards=data.cards.filter(cd=>cd.status===s.id);
+    if(s.id==='fait') cards.sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+    return {...s,cards};
+  });
 }
 
 function buildCard(card,isMirror){
@@ -366,7 +370,7 @@ function render(){
 function markDone(cardId){
   const card=data.cards.find(c=>c.id===cardId);
   showConfirm('Marquer "'+card.title+'" comme fait ?',()=>{
-    card.status='fait';card.urgent=false;card.done=true;
+    card.status='fait';card.urgent=false;card.done=true;card.doneAt=Date.now();
     save();render();
   });
 }
@@ -465,6 +469,7 @@ function saveCard(){
     card.title=title;card.desc=desc;card.tags=tags;card.url=url;
     card.category=cat;card.status=status;card.urgent=urgent;
     card.done=status==='fait';
+    if(status==='fait'&&!card.doneAt)card.doneAt=Date.now();
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
     data.cards.push({id:maxId+1,title,desc,tags,url,category:cat,status,urgent,done:status==='fait'});
@@ -538,7 +543,7 @@ function startDrag(e,card,el,touchHeld){
     // If dropping into "fait", confirm first
     if(gid==='fait'){
       showConfirm('Marquer "'+cardRef.title+'" comme fait ?',()=>{
-        cardRef.status='fait';cardRef.urgent=false;cardRef.done=true;
+        cardRef.status='fait';cardRef.urgent=false;cardRef.done=true;cardRef.doneAt=Date.now();
         save();render();
       },()=>{render()});
       return;
