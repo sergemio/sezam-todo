@@ -101,6 +101,10 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .confirm-btns .confirm-yes:hover{background:#15803d}
 .confirm-btns .confirm-no{background:var(--surface);color:var(--text)}
 .confirm-btns .confirm-no:hover{border-color:var(--accent)}
+.confirm-btns .confirm-move{background:var(--accent);color:#fff;border-color:var(--accent)}
+.confirm-btns .confirm-move:hover{background:#2563eb}
+.confirm-btns .confirm-add{background:#fefce8;color:var(--yellow);border-color:#fef08a}
+.confirm-btns .confirm-add:hover{background:#fef9c3}
 .urgent-mirror{opacity:.85}
 .urgent-mirror .card-origin{font-size:.6rem;color:var(--text2);margin-top:4px;font-style:italic}
 
@@ -495,6 +499,23 @@ function deleteCard(){
   save();closeModal();render();
 }
 
+function showCatChoice(card,newCat,oldCats){
+  const newName=(CATEGORIES.find(c=>c.id===newCat)||{}).title||newCat;
+  const bg=document.createElement('div');bg.className='confirm-bg';
+  bg.innerHTML=`<div class="confirm-box"><p>${esc(card.title)}</p><div class="confirm-btns" style="flex-direction:column"><button class="confirm-move">Deplacer vers ${esc(newName)}</button><button class="confirm-add">Ajouter ${esc(newName)}</button><button class="confirm-no">Annuler</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.confirm-move').addEventListener('click',()=>{
+    card.categories=[newCat];delete card.category;
+    bg.remove();save();render();
+  });
+  bg.querySelector('.confirm-add').addEventListener('click',()=>{
+    card.categories=[...oldCats,newCat];delete card.category;
+    bg.remove();save();render();
+  });
+  bg.querySelector('.confirm-no').addEventListener('click',()=>{bg.remove();render()});
+  bg.addEventListener('click',e=>{if(e.target===bg){bg.remove();render()}});
+}
+
 function setCatChecks(cats){
   document.querySelectorAll('#fCats input').forEach(cb=>{cb.checked=cats.includes(cb.value)});
 }
@@ -570,8 +591,9 @@ function startDrag(e,card,el,touchHeld){
     }
     if(viewMode==='category'){
       const cats=getCats(cardRef);
-      if(!cats.includes(gid)){cardRef.categories=[gid];delete cardRef.category;}
-      else{cardRef.categories=cats;delete cardRef.category;}
+      if(cats.includes(gid)){render();return;}
+      showCatChoice(cardRef,gid,cats);
+      return;
     }
     else cardRef.status=gid;
     save();render();
