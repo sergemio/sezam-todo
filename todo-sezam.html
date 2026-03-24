@@ -275,10 +275,12 @@ function setView(mode){
 }
 
 function getGroups(){
-  if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>getCats(cd).includes(c.id)&&cd.status!=='fait')}));
+  const byOrder=(a,b)=>(a.sortOrder??999)-(b.sortOrder??999);
+  if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>getCats(cd).includes(c.id)&&cd.status!=='fait').sort(byOrder)}));
   return STATUSES.map(s=>{
     let cards=data.cards.filter(cd=>cd.status===s.id);
     if(s.id==='fait') cards.sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+    else cards.sort(byOrder);
     return {...s,cards};
   });
 }
@@ -499,6 +501,29 @@ function deleteCard(){
   save();closeModal();render();
 }
 
+function reorderCard(card,groupId,beforeCardId){
+  // Get all cards in this group in current order
+  let group;
+  if(viewMode==='category') group=data.cards.filter(c=>getCats(c).includes(groupId)&&c.status!=='fait');
+  else group=data.cards.filter(c=>c.status===groupId);
+
+  // Remove card from group
+  group=group.filter(c=>c.id!==card.id);
+
+  // Insert at new position
+  if(beforeCardId!==null){
+    const idx=group.findIndex(c=>c.id===beforeCardId);
+    if(idx>=0) group.splice(idx,0,card);
+    else group.push(card);
+  } else {
+    group.push(card);
+  }
+
+  // Assign sortOrder based on position
+  group.forEach((c,i)=>c.sortOrder=i);
+  save();render();
+}
+
 function showCatChoice(card,newCat,oldCats){
   const newName=(CATEGORIES.find(c=>c.id===newCat)||{}).title||newCat;
   const bg=document.createElement('div');bg.className='confirm-bg';
@@ -573,7 +598,13 @@ function startDrag(e,card,el,touchHeld){
     document.removeEventListener('touchend',onEnd);
     if(!hasMoved){dragCard=null;dragEl=null;return;}
     let gid=null;
-    if(placeholder&&placeholder.parentNode) gid=placeholder.parentNode.dataset.group;
+    // Capture drop position before cleanup
+    let neighborId=null;
+    if(placeholder&&placeholder.parentNode){
+      gid=placeholder.parentNode.dataset.group;
+      const next=placeholder.nextElementSibling;
+      if(next&&next.dataset.id) neighborId=+next.dataset.id;
+    }
     const cardRef=dragCard;
     // Clean up visuals
     if(ghost)ghost.remove();if(placeholder)placeholder.remove();
@@ -581,6 +612,7 @@ function startDrag(e,card,el,touchHeld){
     ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;
     setTimeout(()=>{hasMoved=false},0);
     if(!gid||!cardRef)return;
+
     // If dropping into "fait", confirm first
     if(gid==='fait'){
       showConfirm('Marquer "'+cardRef.title+'" comme fait ?',()=>{
@@ -589,13 +621,24 @@ function startDrag(e,card,el,touchHeld){
       },()=>{render()});
       return;
     }
+
     if(viewMode==='category'){
       const cats=getCats(cardRef);
-      if(cats.includes(gid)){render();return;}
+      if(cats.includes(gid)){
+        // Same category — reorder via sort weight
+        reorderCard(cardRef,gid,neighborId);
+        return;
+      }
       showCatChoice(cardRef,gid,cats);
       return;
     }
-    else cardRef.status=gid;
+
+    // Status view — same status = reorder, different = change
+    if(cardRef.status===gid){
+      reorderCard(cardRef,gid,neighborId);
+      return;
+    }
+    cardRef.status=gid;
     save();render();
   }
   document.addEventListener('mousemove',onMove);
