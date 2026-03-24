@@ -121,20 +121,25 @@ body{display:flex;flex-direction:column;overflow:hidden}
 /* Mobile */
 @media(max-width:700px){
   body{overflow:auto}
-  .topbar{padding:10px 12px;gap:8px}
-  .topbar h1{font-size:1rem}
+  .topbar{padding:10px 12px;gap:6px;flex-wrap:wrap}
+  .topbar h1{font-size:1rem;flex:0 0 auto}
+  .toggle-view{order:1}
+  .toggle-view button{padding:5px 10px;font-size:.68rem}
   .stats{order:3;width:100%;justify-content:flex-start;gap:4px}
   .chip{font-size:.65rem;padding:3px 8px}
   .board{flex-direction:column;padding:10px;gap:10px;overflow-x:hidden;align-items:stretch}
   .column{min-width:unset;max-width:unset;width:100%;max-height:none}
   .col-cards{max-height:none}
   .section-sep{min-width:unset;min-height:2px;width:100%;margin:8px 0}
-  .modal{margin:10px;max-width:calc(100vw - 20px)}
+  .modal{margin:10px;max-width:calc(100vw - 20px);padding:18px}
+  .modal-row{flex-direction:column;gap:0}
   .card{padding:12px 16px 12px 12px}
   .card-title{font-size:.88rem;padding-right:55px}
-  .btn-done,.btn-urgent{opacity:1;width:26px;height:26px}
+  .card-tags{gap:5px}
+  .btn-done,.btn-urgent{opacity:1;width:28px;height:28px}
   .btn-done{font-size:14px}
   .btn-urgent{font-size:12px}
+  .btn-go{padding:5px 10px;font-size:.65rem}
 }
 </style>
 </head>
