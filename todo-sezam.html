@@ -87,6 +87,15 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .card.card-urgent{border-left:3px solid var(--red)}
 .btn-go{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:.6rem;font-weight:700;background:#eff6ff;color:var(--accent);border:1px solid #bfdbfe;cursor:pointer;text-decoration:none;transition:.15s;margin-left:auto}
 .btn-go:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.confirm-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.confirm-box{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center;animation:mIn .15s ease}
+.confirm-box p{font-size:.9rem;font-weight:500;margin-bottom:18px;line-height:1.4;word-break:break-word}
+.confirm-btns{display:flex;gap:10px;justify-content:center}
+.confirm-btns button{flex:1;padding:10px;border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:.15s}
+.confirm-btns .confirm-yes{background:var(--green);color:#fff;border-color:var(--green)}
+.confirm-btns .confirm-yes:hover{background:#15803d}
+.confirm-btns .confirm-no{background:var(--surface);color:var(--text)}
+.confirm-btns .confirm-no:hover{border-color:var(--accent)}
 .urgent-mirror{opacity:.85}
 .urgent-mirror .card-origin{font-size:.6rem;color:var(--text2);margin-top:4px;font-style:italic}
 
@@ -356,9 +365,10 @@ function render(){
 
 function markDone(cardId){
   const card=data.cards.find(c=>c.id===cardId);
-  card.status='fait';
-  card.urgent=false;
-  save();render();
+  showConfirm('Marquer "'+card.title+'" comme fait ?',()=>{
+    card.status='fait';card.urgent=false;card.done=true;
+    save();render();
+  });
 }
 
 function toggleUrgent(cardId){
@@ -469,6 +479,15 @@ function deleteCard(){
   save();closeModal();render();
 }
 
+function showConfirm(msg,onYes,onNo){
+  const bg=document.createElement('div');bg.className='confirm-bg';
+  bg.innerHTML=`<div class="confirm-box"><p>${esc(msg)}</p><div class="confirm-btns"><button class="confirm-no">Non</button><button class="confirm-yes">Oui, c'est fait</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.confirm-yes').addEventListener('click',()=>{bg.remove();if(onYes)onYes()});
+  bg.querySelector('.confirm-no').addEventListener('click',()=>{bg.remove();if(onNo)onNo()});
+  bg.addEventListener('click',e=>{if(e.target===bg){bg.remove();if(onNo)onNo()}});
+}
+
 // Custom drag & drop
 let isDragging=false,dragEl=null,ghost=null,placeholder=null,ghostOffX=0,ghostOffY=0,hasMoved=false;
 
@@ -507,19 +526,26 @@ function startDrag(e,card,el,touchHeld){
     document.removeEventListener('touchmove',onMove);
     document.removeEventListener('touchend',onEnd);
     if(!hasMoved){dragCard=null;dragEl=null;return;}
-    if(placeholder&&placeholder.parentNode){
-      const gid=placeholder.parentNode.dataset.group;
-      if(gid&&dragCard){
-        if(viewMode==='category')dragCard.category=gid;
-        else dragCard.status=gid;
-        if(gid==='fait'){dragCard.status='fait';dragCard.urgent=false;}
-      }
-    }
+    let gid=null;
+    if(placeholder&&placeholder.parentNode) gid=placeholder.parentNode.dataset.group;
+    const cardRef=dragCard;
+    // Clean up visuals
     if(ghost)ghost.remove();if(placeholder)placeholder.remove();
     if(dragEl)dragEl.style.display='';
     ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;
-    save();render();
     setTimeout(()=>{hasMoved=false},0);
+    if(!gid||!cardRef)return;
+    // If dropping into "fait", confirm first
+    if(gid==='fait'){
+      showConfirm('Marquer "'+cardRef.title+'" comme fait ?',()=>{
+        cardRef.status='fait';cardRef.urgent=false;cardRef.done=true;
+        save();render();
+      },()=>{render()});
+      return;
+    }
+    if(viewMode==='category')cardRef.category=gid;
+    else cardRef.status=gid;
+    save();render();
   }
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onEnd);
