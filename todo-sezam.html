@@ -200,7 +200,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
           <label class="cat-check"><input type="checkbox" value="marketing"><span class="tag tag-marketing">Marketing</span></label>
           <label class="cat-check"><input type="checkbox" value="tech"><span class="tag tag-tech">Tech</span></label>
           <label class="cat-check"><input type="checkbox" value="business"><span class="tag tag-business">Business</span></label>
-          <label class="cat-check"><input type="checkbox" value="admin"><span class="tag tag-admin">Admin</span></label>
+          <label class="cat-check"><input type="checkbox" value="admin"><span class="tag tag-admin">RDV & Admin</span></label>
         </div>
       </div>
       <div>
@@ -227,12 +227,12 @@ body{display:flex;flex-direction:column;overflow:hidden}
 const FB_URL='https://sezdo-1-default-rtdb.firebaseio.com/todo';
 
 const CATEGORIES=[
+  {id:'admin',icon:'📅',title:'RDV & Admin'},
   {id:'seo',icon:'🔍',title:'SEO'},
   {id:'plateformes',icon:'📦',title:'Plateformes'},
   {id:'marketing',icon:'📣',title:'Marketing'},
   {id:'tech',icon:'💻',title:'Tech'},
   {id:'business',icon:'💼',title:'Business'},
-  {id:'admin',icon:'📋',title:'Admin'},
 ];
 const STATUSES=[
   {id:'a-faire',icon:'📝',title:'A faire'},
