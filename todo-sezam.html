@@ -102,7 +102,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .modal label:first-of-type{margin-top:0}
 .modal input,.modal select,.modal textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:.85rem;color:var(--text);outline:none;transition:.15s}
 .modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
-.modal textarea{resize:vertical;min-height:60px}
+.modal textarea{resize:none;min-height:60px;overflow:hidden;field-sizing:content}
 .modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
 .modal-row{display:flex;gap:10px}
 .modal-row>div{flex:1}
@@ -465,6 +465,17 @@ function deleteCard(){
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+// Auto-resize textarea
+const desc=document.getElementById('fDesc');
+function autoResize(){desc.style.height='auto';desc.style.height=desc.scrollHeight+'px'}
+desc.addEventListener('input',autoResize);
+new MutationObserver(()=>{if(desc.value) autoResize()}).observe(desc,{attributes:true});
+// Also resize when modal opens (value set programmatically)
+const origOpen=document.getElementById('modalBg').classList;
+const mo=new MutationObserver(()=>{if(document.getElementById('modalBg').classList.contains('open'))setTimeout(autoResize,50)});
+mo.observe(document.getElementById('modalBg'),{attributes:true,attributeFilter:['class']});
+
 load().then(()=>render());
 </script>
 </body>
