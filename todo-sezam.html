@@ -87,6 +87,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .card.card-urgent{border-left:3px solid var(--red)}
 .btn-go{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:.6rem;font-weight:700;background:#eff6ff;color:var(--accent);border:1px solid #bfdbfe;cursor:pointer;text-decoration:none;transition:.15s;margin-left:auto}
 .btn-go:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cat-checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.cat-check{cursor:pointer;display:flex;align-items:center;gap:0}
+.cat-check input{display:none}
+.cat-check .tag{opacity:.4;transition:.15s;cursor:pointer}
+.cat-check input:checked+.tag{opacity:1}
 .confirm-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
 .confirm-box{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center;animation:mIn .15s ease}
 .confirm-box p{font-size:.9rem;font-weight:500;margin-bottom:18px;line-height:1.4;word-break:break-word}
@@ -184,15 +189,15 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <input type="text" id="fTags" placeholder="Uber, Deliveroo, Priorite #1...">
     <div class="modal-row">
       <div>
-        <label>Categorie</label>
-        <select id="fCat">
-          <option value="seo">SEO</option>
-          <option value="plateformes">Plateformes</option>
-          <option value="marketing">Marketing</option>
-          <option value="tech">Tech</option>
-          <option value="business">Business</option>
-          <option value="admin">Admin</option>
-        </select>
+        <label>Categories</label>
+        <div id="fCats" class="cat-checks">
+          <label class="cat-check"><input type="checkbox" value="seo"><span class="tag tag-seo">SEO</span></label>
+          <label class="cat-check"><input type="checkbox" value="plateformes"><span class="tag tag-plateformes">Plateformes</span></label>
+          <label class="cat-check"><input type="checkbox" value="marketing"><span class="tag tag-marketing">Marketing</span></label>
+          <label class="cat-check"><input type="checkbox" value="tech"><span class="tag tag-tech">Tech</span></label>
+          <label class="cat-check"><input type="checkbox" value="business"><span class="tag tag-business">Business</span></label>
+          <label class="cat-check"><input type="checkbox" value="admin"><span class="tag tag-admin">Admin</span></label>
+        </div>
       </div>
       <div>
         <label>Statut</label>
@@ -235,7 +240,12 @@ const CAT_TAG_CLASS={seo:'tag-seo',plateformes:'tag-plateformes',marketing:'tag-
 const TAG_CLASSES={urgent:'tag-urgent',seo:'tag-seo',business:'tag-business',marketing:'tag-marketing',tech:'tag-tech',plateformes:'tag-plateformes',admin:'tag-admin',uber:'tag-plateformes',deliveroo:'tag-plateformes',delicity:'tag-plateformes',gbp:'tag-seo','google ads':'tag-seo','priorite #1':'tag-urgent',suivi:'tag-a-surveiller'};
 
 let data;
-let viewMode='category'; // 'category' or 'status'
+let viewMode='category';
+function getCats(card){
+  if(Array.isArray(card.categories))return card.categories;
+  if(card.category)return[card.category];
+  return['business'];
+} // 'category' or 'status'
 let dragCard=null;
 
 async function load(){
@@ -261,7 +271,7 @@ function setView(mode){
 }
 
 function getGroups(){
-  if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>cd.category===c.id&&cd.status!=='fait')}));
+  if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>getCats(cd).includes(c.id)&&cd.status!=='fait')}));
   return STATUSES.map(s=>{
     let cards=data.cards.filter(cd=>cd.status===s.id);
     if(s.id==='fait') cards.sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
@@ -276,21 +286,20 @@ function buildCard(card,isMirror){
   c.draggable=false;
   c.dataset.id=card.id;
 
-  // Always show category tag + status tag for the other dimension
-  const cat=CATEGORIES.find(ct=>ct.id===card.category);
+  const cats=getCats(card);
   const st=STATUSES.find(s=>s.id===card.status);
-  const catTag=cat?`<span class="tag ${CAT_TAG_CLASS[card.category]||'tag-business'}">${cat.title}</span>`:'';
+  const catTags=cats.map(cid=>{const ct=CATEGORIES.find(c=>c.id===cid);return ct?`<span class="tag ${CAT_TAG_CLASS[cid]||'tag-business'}">${ct.title}</span>`:''}).join('');
   const statusTag=viewMode==='category'&&st?`<span class="tag tag-status tag-${card.status}">${st.title}</span>`:'';
 
   const extraTagHtml=(card.tags||[]).map(t=>{
     const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
   }).join('');
-  const tagHtml=catTag+statusTag+extraTagHtml;
+  const tagHtml=catTags+statusTag+extraTagHtml;
 
   const doneBtn=!isDone&&!isMirror?`<button class="btn-done" title="Fait">&#10003;</button>`:'';
   const urgentBtn=!isDone?`<button class="btn-urgent${card.urgent?' is-urgent':''}" title="Urgent">!</button>`:'';
-  const originLabel=isMirror?`<div class="card-origin">${esc((CATEGORIES.find(ct=>ct.id===card.category)||{}).title||'')} · ${esc((STATUSES.find(s=>s.id===card.status)||{}).title||'')}</div>`:'';
+  const originLabel=isMirror?`<div class="card-origin">${cats.map(cid=>(CATEGORIES.find(c=>c.id===cid)||{}).title||'').join(', ')} · ${esc((st||{}).title||'')}</div>`:'';
 
   c.innerHTML=`
     ${doneBtn}${!isMirror?urgentBtn:''}
@@ -423,7 +432,7 @@ function openModal(cardId){
   document.getElementById('fTitle').value=card.title;
   document.getElementById('fDesc').value=card.desc||'';
   document.getElementById('fTags').value=(card.tags||[]).join(', ');
-  document.getElementById('fCat').value=card.category;
+  setCatChecks(getCats(card));
   document.getElementById('fStatus').value=card.status;
   document.getElementById('fUrgent').checked=!!card.urgent;
   document.getElementById('fUrl').value=card.url||'';
@@ -441,9 +450,10 @@ function openModalNew(groupId){
   document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
   if(viewMode==='category'){
-    document.getElementById('fCat').value=groupId;
+    setCatChecks([groupId]);
     document.getElementById('fStatus').value='a-faire';
   } else {
+    setCatChecks(['business']);
     document.getElementById('fStatus').value=groupId;
     document.getElementById('fCat').value='business';
   }
@@ -458,7 +468,7 @@ function saveCard(){
   if(!title)return document.getElementById('fTitle').focus();
   const desc=document.getElementById('fDesc').value.trim();
   const tags=document.getElementById('fTags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  const cat=document.getElementById('fCat').value;
+  const cats=getCheckedCats();
   const status=document.getElementById('fStatus').value;
   const urgent=document.getElementById('fUrgent').checked;
   const url=document.getElementById('fUrl').value.trim()||null;
@@ -467,12 +477,13 @@ function saveCard(){
   if(editId){
     const card=data.cards.find(c=>c.id===+editId);
     card.title=title;card.desc=desc;card.tags=tags;card.url=url;
-    card.category=cat;card.status=status;card.urgent=urgent;
+    card.categories=cats;delete card.category;
+    card.status=status;card.urgent=urgent;
     card.done=status==='fait';
     if(status==='fait'&&!card.doneAt)card.doneAt=Date.now();
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
-    data.cards.push({id:maxId+1,title,desc,tags,url,category:cat,status,urgent,done:status==='fait'});
+    data.cards.push({id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait'});
   }
   save();closeModal();render();
 }
@@ -482,6 +493,15 @@ function deleteCard(){
   const id=+document.getElementById('fId').value;
   data.cards=data.cards.filter(c=>c.id!==id);
   save();closeModal();render();
+}
+
+function setCatChecks(cats){
+  document.querySelectorAll('#fCats input').forEach(cb=>{cb.checked=cats.includes(cb.value)});
+}
+function getCheckedCats(){
+  const cats=[];
+  document.querySelectorAll('#fCats input:checked').forEach(cb=>cats.push(cb.value));
+  return cats.length?cats:['business'];
 }
 
 function showConfirm(msg,onYes,onNo){
@@ -548,7 +568,11 @@ function startDrag(e,card,el,touchHeld){
       },()=>{render()});
       return;
     }
-    if(viewMode==='category')cardRef.category=gid;
+    if(viewMode==='category'){
+      const cats=getCats(cardRef);
+      if(!cats.includes(gid)){cardRef.categories=[gid];delete cardRef.category;}
+      else{cardRef.categories=cats;delete cardRef.category;}
+    }
     else cardRef.status=gid;
     save();render();
   }
