@@ -320,7 +320,7 @@ function buildCard(card,isMirror){
   const ub=c.querySelector('.btn-urgent');
   if(ub) ub.addEventListener('click',e=>{e.stopPropagation();toggleUrgent(card.id)});
   c.addEventListener('click',()=>openModal(card.id));
-  if(!isMirror){
+  {
     c.addEventListener('mousedown',e=>{if(e.target.closest('button')||e.target.closest('a'))return;startDrag(e,card,c)});
     let holdTimer=null;
     c.addEventListener('touchstart',e=>{
@@ -349,9 +349,10 @@ function render(){
       <span class="col-title">Urgent</span>
       <span class="col-count">${urgentCards.length}</span>
     </div>
-    <div class="col-cards"></div>
+    <div class="col-cards" data-group="urgent"></div>
   `;
   const uc=urgentDiv.querySelector('.col-cards');
+  urgentCards.sort((a,b)=>(a.urgentOrder??999)-(b.urgentOrder??999));
   urgentCards.forEach(card=>uc.appendChild(buildCard(card,true)));
   board.appendChild(urgentDiv);
 
@@ -612,6 +613,20 @@ function startDrag(e,card,el,touchHeld){
     ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;
     setTimeout(()=>{hasMoved=false},0);
     if(!gid||!cardRef)return;
+
+    // Reorder within urgent column
+    if(gid==='urgent'){
+      const urgents=data.cards.filter(c=>c.urgent&&c.status!=='fait');
+      const others=urgents.filter(c=>c.id!==cardRef.id);
+      if(neighborId!==null){
+        const idx=others.findIndex(c=>c.id===neighborId);
+        if(idx>=0) others.splice(idx,0,cardRef);
+        else others.push(cardRef);
+      } else others.push(cardRef);
+      others.forEach((c,i)=>c.urgentOrder=i);
+      if(!cardRef.urgent){cardRef.urgent=true;}
+      save();render();return;
+    }
 
     // If dropping into "fait", confirm first
     if(gid==='fait'){
