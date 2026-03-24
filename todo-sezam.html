@@ -143,10 +143,10 @@ body{display:flex;flex-direction:column;overflow:hidden}
 <div class="topbar">
   <h1>Sezam&Co</h1>
   <div class="stats">
-    <span class="chip chip-red" id="statUrgent"></span>
-    <span class="chip chip-yellow" id="statProgress"></span>
-    <span class="chip chip-blue" id="statWatch"></span>
-    <span class="chip chip-green" id="statDone"></span>
+    <span class="chip chip-red" id="statUrgent" onclick="scrollToCol('urgent')" style="cursor:pointer"></span>
+    <span class="chip chip-yellow" id="statProgress" onclick="scrollToCol('first-active')" style="cursor:pointer"></span>
+    <span class="chip chip-blue" id="statWatch" onclick="scrollToCol('watch')" style="cursor:pointer"></span>
+    <span class="chip chip-green" id="statDone" onclick="scrollToCol('done')" style="cursor:pointer"></span>
   </div>
 </div>
 
@@ -353,6 +353,25 @@ function updateStats(){
   document.getElementById('statProgress').textContent=`${progress} en cours`;
   document.getElementById('statWatch').textContent=`${watch} a surveiller`;
   document.getElementById('statDone').textContent=`${done} fait`;
+}
+
+function scrollToCol(target){
+  const board=document.getElementById('board');
+  const cols=board.querySelectorAll('.column');
+  let el=null;
+  if(target==='urgent'){
+    el=cols[0]; // urgent view is always first
+  } else if(target==='first-active'){
+    // first real data column (not urgent view)
+    el=cols[1];
+  } else {
+    // find by data-col attribute in col-cards
+    cols.forEach(c=>{
+      const cc=c.querySelector(`[data-col="${target}"]`);
+      if(cc) el=c;
+    });
+  }
+  if(el) el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
 }
 
 function openModal(cardId,colId){
