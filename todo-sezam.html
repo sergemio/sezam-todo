@@ -258,11 +258,29 @@ async function load(){
     if(res.ok) data=await res.json();
     else throw new Error();
     if(!data||!data.cards) data={cards:[]};
+    sanitizeCards();
   }catch{
     data={cards:[]};
   }
 }
+function sanitizeText(s){
+  if(!s)return s;
+  return s.replace(/\u2014|\u2013/g,' - ')
+    .replace(/\u20ac/g,'EUR')
+    .replace(/[\u201c\u201d]/g,'"')
+    .replace(/[\u2018\u2019]/g,"'")
+    .replace(/\u2026/g,'...')
+    .replace(/[^\x00-\x7F]/g,'');
+}
+function sanitizeCards(){
+  if(!data||!data.cards)return;
+  data.cards.forEach(c=>{
+    if(c.title)c.title=sanitizeText(c.title);
+    if(c.desc)c.desc=sanitizeText(c.desc);
+  });
+}
 function save(){
+  sanitizeCards();
   fetch(FB_URL+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(()=>{});
 }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
