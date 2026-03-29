@@ -434,7 +434,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <div class="app-header">
       <span class="app-header-date" id="appDate"></span>
       <div class="app-header-right">
-        <span class="chip chip-red" id="statUrgent" style="cursor:pointer"></span>
+        <span class="chip chip-red" id="statUrgent" style="cursor:pointer" onclick="scrollToCol('urgent')"></span>
         <button class="btn-view-switch" id="btnViewSwitch" onclick="toggleViewMode()">⊞ Statut</button>
       </div>
     </div>
@@ -574,8 +574,6 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 
 function setView(mode){
   viewMode=mode;
-  document.getElementById('viewCat').classList.toggle('active',mode==='category');
-  document.getElementById('viewStat').classList.toggle('active',mode==='status');
   render();
 }
 
