@@ -892,6 +892,10 @@ function openModal(cardId){
 }
 
 function openModalNew(groupId){
+  // Résoudre tab ID → première catégorie Firebase correspondante
+  const tab = TABS.find(t => t.id === groupId);
+  const resolvedCat = tab ? tab.cats[0] : groupId;
+
   document.getElementById('modalTitle').textContent='Nouvelle carte';
   document.getElementById('btnDel').style.display='none';
   document.getElementById('fId').value='';
@@ -901,12 +905,11 @@ function openModalNew(groupId){
   document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
   if(viewMode==='category'){
-    setCatChecks([groupId]);
+    setCatChecks([resolvedCat]);
     document.getElementById('fStatus').value='a-faire';
   } else {
     setCatChecks(['business']);
-    document.getElementById('fStatus').value=groupId;
-    document.getElementById('fCat').value='business';
+    document.getElementById('fStatus').value=resolvedCat;
   }
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
@@ -1136,6 +1139,8 @@ function autoResize(){descEl.style.height='auto';descEl.style.height=descEl.scro
 descEl.addEventListener('input',autoResize);
 
 load().then(()=>{render();setAppDate();});
+
+window.addEventListener('resize', () => render());
 </script>
 </body>
 </html>
