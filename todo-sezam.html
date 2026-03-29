@@ -427,21 +427,26 @@ body{display:flex;flex-direction:column;overflow:hidden}
 </head>
 <body>
 
-<div class="topbar">
-  <h1>Sezam&Co</h1>
-  <div class="toggle-view">
-    <button id="viewCat" class="active" onclick="setView('category')">Categorie</button>
-    <button id="viewStat" onclick="setView('status')">Statut</button>
-  </div>
-  <div class="stats">
-    <span class="chip chip-red" id="statUrgent" onclick="scrollToCol('urgent')"></span>
-    <span class="chip chip-yellow" id="statProgress" onclick="scrollToCol('a-faire')"></span>
-    <span class="chip chip-blue" id="statWatch" onclick="scrollToCol('a-surveiller')"></span>
-    <span class="chip chip-green" id="statDone" onclick="scrollToCol('fait')"></span>
+<!-- App layout (shared desktop + mobile) -->
+<div class="app-layout" id="appLayout">
+  <div class="side-tabs" id="sideTabs"></div>
+  <div class="app-main">
+    <div class="app-header">
+      <span class="app-header-date" id="appDate"></span>
+      <div class="app-header-right">
+        <span class="chip chip-red" id="statUrgent" style="cursor:pointer"></span>
+        <button class="btn-view-switch" id="btnViewSwitch" onclick="toggleViewMode()">⊞ Statut</button>
+      </div>
+    </div>
+    <!-- Mobile list -->
+    <div class="mobile-list" id="mobileList"></div>
+    <!-- Desktop board -->
+    <div class="board" id="board"></div>
   </div>
 </div>
 
-<div class="board" id="board"></div>
+<!-- Mobile add button -->
+<button class="mobile-add-btn" id="mobileAddBtn" onclick="openModalNew(currentTab)" style="display:none">+</button>
 
 <div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -711,13 +716,17 @@ function getDragAfter(container,y){
 function updateStats(){
   const all=data.cards;
   const urgent=all.filter(c=>c.urgent&&c.status!=='fait').length;
-  const watch=all.filter(c=>c.status==='a-surveiller').length;
-  const done=all.filter(c=>c.status==='fait').length;
-  const progress=all.length-done;
-  document.getElementById('statUrgent').textContent=`${urgent} urgents`;
-  document.getElementById('statProgress').textContent=`${progress-urgent-watch} en cours`;
-  document.getElementById('statWatch').textContent=`${watch} a surveiller`;
-  document.getElementById('statDone').textContent=`${done} fait`;
+  const el=document.getElementById('statUrgent');
+  if(el) el.textContent=urgent>0?`${urgent} urgent${urgent>1?'s':''}`:''
+}
+
+function setAppDate(){
+  const el=document.getElementById('appDate');
+  if(!el) return;
+  const now=new Date();
+  const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const months=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+  el.textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
 }
 
 function scrollToCol(target){
@@ -991,7 +1000,7 @@ const descEl=document.getElementById('fDesc');
 function autoResize(){descEl.style.height='auto';descEl.style.height=descEl.scrollHeight+'px'}
 descEl.addEventListener('input',autoResize);
 
-load().then(()=>render());
+load().then(()=>{render();setAppDate();});
 </script>
 </body>
 </html>
