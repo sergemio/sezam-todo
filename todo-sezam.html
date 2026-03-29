@@ -894,7 +894,7 @@ function openModal(cardId){
 function openModalNew(groupId){
   // Résoudre tab ID → première catégorie Firebase correspondante
   const tab = TABS.find(t => t.id === groupId);
-  const resolvedCat = tab ? tab.cats[0] : groupId;
+  const resolvedCat = tab ? tab.cats[0] : groupId; // cats[0] = default; modal lets user correct before saving
 
   document.getElementById('modalTitle').textContent='Nouvelle carte';
   document.getElementById('btnDel').style.display='none';
@@ -1140,7 +1140,11 @@ descEl.addEventListener('input',autoResize);
 
 load().then(()=>{render();setAppDate();});
 
-window.addEventListener('resize', () => render());
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => render(), 150);
+});
 </script>
 </body>
 </html>
