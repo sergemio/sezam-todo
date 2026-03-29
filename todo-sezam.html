@@ -576,8 +576,22 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function renderTabs() {
   const container = document.getElementById('sideTabs');
   if (!container) return;
-  const items = viewMode === 'category' ? TABS : STATUSES;
   container.innerHTML = '';
+
+  // Urgent tab — always pinned at top, cross-cutting across all view modes
+  const urgentBtn = document.createElement('button');
+  urgentBtn.className = 'side-tab urgent-tab' + (currentTab === 'urgent' ? ' active' : '');
+  urgentBtn.innerHTML = `<span class="side-tab-icon">🔴</span><span class="side-tab-label">Urgent</span>`;
+  urgentBtn.addEventListener('click', () => { currentTab = 'urgent'; expandedCardId = null; render(); });
+  container.appendChild(urgentBtn);
+
+  // Separator
+  const sep = document.createElement('div');
+  sep.style.cssText = 'height:1px;background:rgba(255,255,255,.1);margin:4px 8px;flex-shrink:0';
+  container.appendChild(sep);
+
+  // Mode tabs (categories or statuses)
+  const items = viewMode === 'category' ? TABS : STATUSES;
   items.forEach(item => {
     const btn = document.createElement('button');
     btn.className = 'side-tab' + (item.id === currentTab ? ' active' : '');
@@ -597,8 +611,10 @@ function renderTabs() {
 
 function toggleViewMode() {
   viewMode = viewMode === 'category' ? 'status' : 'category';
-  // Reset tab to first item of new mode
-  currentTab = viewMode === 'category' ? TABS[0].id : STATUSES[0].id;
+  // Keep urgent tab selected if active; otherwise reset to first item of new mode
+  if (currentTab !== 'urgent') {
+    currentTab = viewMode === 'category' ? TABS[0].id : STATUSES[0].id;
+  }
   expandedCardId = null;
   const btn = document.getElementById('btnViewSwitch');
   if (btn) {
@@ -675,7 +691,9 @@ function renderMobile() {
   list.innerHTML = '';
 
   let cards;
-  if (viewMode === 'category') {
+  if (currentTab === 'urgent') {
+    cards = data.cards.filter(c => c.urgent && c.status !== 'fait');
+  } else if (viewMode === 'category') {
     cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   } else {
     cards = data.cards.filter(c => c.status === currentTab);
@@ -777,14 +795,16 @@ function renderDesktop() {
 
   // Filter cards by active tab
   let tabCards;
-  if (viewMode === 'category') {
+  if (currentTab === 'urgent') {
+    tabCards = data.cards.filter(c => c.urgent && c.status !== 'fait');
+  } else if (viewMode === 'category') {
     tabCards = getTabCards(currentTab);
   } else {
     tabCards = data.cards.filter(c => c.status === currentTab);
   }
 
-  // Columns = statuses for category mode
-  const columns = viewMode === 'category' ? STATUSES : TABS;
+  // Columns = statuses for category/urgent mode
+  const columns = viewMode === 'category' || currentTab === 'urgent' ? STATUSES : TABS;
 
   columns.forEach(col => {
     let cards;
