@@ -464,12 +464,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
       <div>
         <label>Categories</label>
         <div id="fCats" class="cat-checks">
-          <label class="cat-check"><input type="checkbox" value="seo"><span class="tag tag-seo">SEO</span></label>
-          <label class="cat-check"><input type="checkbox" value="plateformes"><span class="tag tag-plateformes">Plateformes</span></label>
-          <label class="cat-check"><input type="checkbox" value="marketing"><span class="tag tag-marketing">Marketing</span></label>
-          <label class="cat-check"><input type="checkbox" value="tech"><span class="tag tag-tech">Tech</span></label>
+          <label class="cat-check"><input type="checkbox" value="mktg"><span class="tag tag-marketing">MKTG</span></label>
           <label class="cat-check"><input type="checkbox" value="business"><span class="tag tag-business">Business</span></label>
-          <label class="cat-check"><input type="checkbox" value="admin"><span class="tag tag-admin">RDV & Admin</span></label>
+          <label class="cat-check"><input type="checkbox" value="tech"><span class="tag tag-tech">Tech</span></label>
+          <label class="cat-check"><input type="checkbox" value="routine"><span class="tag tag-admin">Routine</span></label>
+          <label class="cat-check"><input type="checkbox" value="events"><span class="tag tag-seo">Events</span></label>
         </div>
       </div>
       <div>
@@ -1006,12 +1005,21 @@ function showCatChoice(card,newCat,oldCats){
 }
 
 function setCatChecks(cats){
-  document.querySelectorAll('#fCats input').forEach(cb=>{cb.checked=cats.includes(cb.value)});
+  // cats can be old Firebase IDs (seo, marketing, admin...) or new tab IDs — map both to tab IDs
+  const tabIds = cats.map(c => {
+    const tab = TABS.find(t => t.id === c || t.cats.includes(c));
+    return tab ? tab.id : null;
+  }).filter(Boolean);
+  document.querySelectorAll('#fCats input').forEach(cb => { cb.checked = tabIds.includes(cb.value); });
 }
 function getCheckedCats(){
-  const cats=[];
-  document.querySelectorAll('#fCats input:checked').forEach(cb=>cats.push(cb.value));
-  return cats.length?cats:['business'];
+  // Return first Firebase category of each checked tab
+  const cats = [];
+  document.querySelectorAll('#fCats input:checked').forEach(cb => {
+    const tab = TABS.find(t => t.id === cb.value);
+    if (tab) cats.push(tab.cats[0]);
+  });
+  return cats.length ? cats : ['business'];
 }
 
 function showConfirm(msg,onYes,onNo){
