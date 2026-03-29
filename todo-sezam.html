@@ -708,7 +708,7 @@ function buildMobileCard(card) {
 
   // Tags HTML
   const st = STATUSES.find(s => s.id === card.status);
-  const statusTag = st ? `<span class="tag tag-status tag-${card.status}">${st.title}</span>` : '';
+  const statusTag = viewMode === 'category' && st ? `<span class="tag tag-status tag-${card.status}">${st.title}</span>` : '';
   const extraTagHtml = (card.tags || []).map(t => {
     const cls = TAG_CLASSES[t.toLowerCase()] || 'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
