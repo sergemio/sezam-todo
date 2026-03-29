@@ -612,17 +612,6 @@ function toggleViewMode() {
   render();
 }
 
-function getGroups(){
-  const byOrder=(a,b)=>(a.sortOrder??999)-(b.sortOrder??999);
-  if(viewMode==='category') return CATEGORIES.map(c=>({...c,cards:data.cards.filter(cd=>getCats(cd).includes(c.id)&&cd.status!=='fait').sort(byOrder)}));
-  return STATUSES.map(s=>{
-    let cards=data.cards.filter(cd=>cd.status===s.id);
-    if(s.id==='fait') cards.sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
-    else cards.sort(byOrder);
-    return {...s,cards};
-  });
-}
-
 function buildCard(card,isMirror){
   const c=document.createElement('div');
   const isDone=card.status==='fait';
@@ -717,7 +706,7 @@ function renderDesktop() {
     }
     cards.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
-    if (cards.length === 0 && viewMode === 'category') return;
+    if (cards.length === 0) return;
 
     const div = document.createElement('div');
     div.className = 'column';
