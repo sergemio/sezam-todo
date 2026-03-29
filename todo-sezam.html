@@ -244,15 +244,15 @@ const TABS = [
   { id:'mktg',     icon:'📣', title:'MKTG',     cats:['seo','marketing'] },
   { id:'business', icon:'💼', title:'Business',  cats:['business','admin'] },
   { id:'tech',     icon:'💻', title:'Tech',      cats:['tech','plateformes'] },
-  { id:'routine',  icon:'🔄', title:'Routine',   cats:['routine'] },
-  { id:'events',   icon:'📅', title:'Events',    cats:['events'] },
+  { id:'routine',  icon:'🔄', title:'Routine',   cats:['routine'] },   // future category
+  { id:'events',   icon:'📅', title:'Events',    cats:['events'] },    // future category
 ];
 const CAT_TAG_CLASS={seo:'tag-seo',plateformes:'tag-plateformes',marketing:'tag-marketing',tech:'tag-tech',business:'tag-business',admin:'tag-admin'};
 const TAG_CLASSES={urgent:'tag-urgent',seo:'tag-seo',business:'tag-business',marketing:'tag-marketing',tech:'tag-tech',plateformes:'tag-plateformes',admin:'tag-admin',uber:'tag-plateformes',deliveroo:'tag-plateformes',delicity:'tag-plateformes',gbp:'tag-seo','google ads':'tag-seo','priorite #1':'tag-urgent',suivi:'tag-a-surveiller'};
 
 function getTabCards(tabId) {
   const tab = TABS.find(t => t.id === tabId);
-  if (!tab) return [];
+  if (!tab || !data?.cards) return [];
   return data.cards.filter(c => {
     const cats = getCats(c);
     return cats.some(cat => tab.cats.includes(cat));
@@ -261,7 +261,7 @@ function getTabCards(tabId) {
 
 let data;
 let viewMode='category';
-let currentTab = 'mktg';
+let currentTab = 'mktg'; // tab actif pour navigation mobile
 let expandedCardId = null; // pour accordion mobile
 function getCats(card){
   if(Array.isArray(card.categories))return card.categories;
