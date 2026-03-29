@@ -675,7 +675,104 @@ function render() {
 }
 
 function renderMobile() {
-  // TODO: implemented in Task 5
+  const list = document.getElementById('mobileList');
+  list.innerHTML = '';
+
+  let cards;
+  if (viewMode === 'category') {
+    cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
+  } else {
+    cards = data.cards.filter(c => c.status === currentTab);
+  }
+  cards.sort((a, b) => {
+    if (a.urgent && !b.urgent) return -1;
+    if (!a.urgent && b.urgent) return 1;
+    return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+  });
+
+  if (cards.length === 0) {
+    list.innerHTML = '<div style="padding:24px 16px;color:var(--text2);font-size:.82rem;text-align:center">Aucune tache ici</div>';
+    return;
+  }
+
+  cards.forEach(card => list.appendChild(buildMobileCard(card)));
+}
+
+function buildMobileCard(card) {
+  const isDone = card.status === 'fait';
+  const isExpanded = expandedCardId === card.id;
+
+  const el = document.createElement('div');
+  el.className = 'mobile-card' + (card.urgent ? ' urgent-card' : '');
+  el.dataset.id = card.id;
+
+  // Tags HTML
+  const st = STATUSES.find(s => s.id === card.status);
+  const statusTag = st ? `<span class="tag tag-status tag-${card.status}">${st.title}</span>` : '';
+  const extraTagHtml = (card.tags || []).map(t => {
+    const cls = TAG_CLASSES[t.toLowerCase()] || 'tag-business';
+    return `<span class="tag ${cls}">${esc(t)}</span>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="mobile-card-check${isDone ? ' done' : ''}" data-action="check">
+      ${isDone ? '&#10003;' : ''}
+    </div>
+    <div class="mobile-card-body">
+      <div class="mobile-card-title${isDone ? ' done-title' : ''}">${esc(card.title)}</div>
+      <div class="mobile-card-detail${isExpanded ? ' open' : ''}">
+        ${card.desc ? `<div class="mobile-card-desc">${esc(card.desc)}</div>` : ''}
+        <div class="mobile-card-tags">${statusTag}${extraTagHtml}</div>
+        <div class="mobile-card-actions">
+          ${card.url ? `<a class="btn-go" href="${esc(card.url)}" target="_blank">Go &rarr;</a>` : ''}
+          <button class="mobile-urgent-toggle${card.urgent ? ' is-urgent' : ''}" data-action="urgent">
+            ${card.urgent ? '&#128308; Urgent' : '! Urgent'}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-card-urgent-dot${card.urgent ? ' visible' : ''}"></div>
+  `;
+
+  // Checkbox (marquer fait)
+  el.querySelector('[data-action="check"]').addEventListener('click', e => {
+    e.stopPropagation();
+    markDone(card.id);
+  });
+
+  // Toggle urgent
+  el.querySelector('[data-action="urgent"]').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleUrgent(card.id);
+  });
+
+  // Tap = expand/collapse (accordion)
+  let tapTimer = null;
+  let tapCount = 0;
+
+  el.addEventListener('click', e => {
+    if (e.target.closest('[data-action]') || e.target.closest('a')) return;
+    tapCount++;
+    if (tapCount === 1) {
+      tapTimer = setTimeout(() => {
+        tapCount = 0;
+        // Single tap = toggle expand (accordion)
+        if (expandedCardId === card.id) {
+          expandedCardId = null;
+        } else {
+          expandedCardId = card.id;
+        }
+        renderMobile();
+      }, 250);
+    } else {
+      clearTimeout(tapTimer);
+      tapCount = 0;
+      // Double tap = open modal edit
+      openModal(card.id);
+    }
+  });
+
+  return el;
 }
 
 function renderDesktop() {
