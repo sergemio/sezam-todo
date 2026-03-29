@@ -175,7 +175,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .side-tab:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
 .side-tab.active { background: var(--accent); color: #fff; }
 .side-tab-icon { font-size: 1.1rem; }
-.side-tab-label { font-size: .48rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; writing-mode: horizontal-tb; }
+.side-tab-label { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; writing-mode: horizontal-tb; }
 
 /* Main content area */
 .app-main {
@@ -191,7 +191,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #fff;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -292,7 +292,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
     overflow: hidden;
     transition: max-height .25s ease;
   }
-  .mobile-card-detail.open { max-height: 400px; }
+  .mobile-card-detail.open { max-height: 600px; }
   .mobile-card-desc {
     font-size: .75rem;
     color: var(--text2);
@@ -381,10 +381,10 @@ body{display:flex;flex-direction:column;overflow:hidden}
     cursor: pointer;
     border: 1px solid var(--border);
   }
-  .mobile-edit-save {
+  .mobile-edit-footer .mobile-edit-save {
     background: var(--accent);
     color: #fff;
-    border-color: var(--accent) !important;
+    border-color: var(--accent);
   }
   .mobile-edit-more {
     background: none;
