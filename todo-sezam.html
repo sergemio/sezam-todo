@@ -60,6 +60,13 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .col-cards .card{transition:transform .25s cubic-bezier(.2,.8,.3,1),box-shadow .25s ease}
 .col-cards .card.push-down{transform:translateY(12px)}
 .col-cards .card.push-up{transform:translateY(-12px)}
+.card-routine-due{background:#ededff !important}
+.card-routine-due .card-title::before{content:'🔄 ';font-size:.7rem}
+.card-next-due{font-size:.65rem;color:var(--text2);margin-top:4px;font-style:italic}
+.tab-badge{background:var(--accent);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700}
+.recurrence-fields{margin-top:8px;padding:10px;background:#f8f9fa;border-radius:8px;display:none}
+.recurrence-fields.visible{display:block}
+.recurrence-fields select,.recurrence-fields input{font-size:.8rem;padding:4px 8px;border:1px solid var(--border);border-radius:6px;margin-top:4px}
 .card+.card{margin-top:10px}
 .card-title{font-size:.82rem;font-weight:600;line-height:1.3;margin-bottom:4px;padding-right:50px}
 .card-desc{font-size:.7rem;color:var(--text2);line-height:1.4;opacity:.75}
@@ -484,6 +491,24 @@ body{display:flex;flex-direction:column;overflow:hidden}
         </select>
       </div>
     </div>
+    <div id="recurrenceFields" class="recurrence-fields">
+      <label style="font-size:.8rem;font-weight:600">Recurrence</label>
+      <select id="fRecurFreq" onchange="updateRecurFields()">
+        <option value="">Aucune</option>
+        <option value="daily">Tous les jours</option>
+        <option value="weekly">Toutes les semaines</option>
+        <option value="monthly">Tous les mois</option>
+      </select>
+      <span id="recurDayWrap" style="display:none;margin-left:8px">
+        <select id="fRecurDay">
+          <option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option>
+          <option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option>
+        </select>
+      </span>
+      <span id="recurDateWrap" style="display:none;margin-left:8px">
+        Le <input type="number" id="fRecurDate" min="1" max="31" value="1" style="width:50px"> du mois
+      </span>
+    </div>
     <label style="margin-top:14px;display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem"><input type="checkbox" id="fUrgent" style="width:auto"> Marquer comme urgent</label>
     <div class="modal-actions">
       <button class="btn btn-danger" id="btnDel" style="display:none" onclick="deleteCard()">Supprimer</button>
@@ -541,6 +566,54 @@ function getCats(card){
 } // 'category' or 'status'
 let dragCard=null;
 
+// --- Recurrence helpers ---
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function calcNextDue(rec, fromDate){
+  const d = fromDate ? new Date(fromDate+'T00:00:00') : new Date();
+  if(rec.freq==='daily'){
+    d.setDate(d.getDate()+1);
+  } else if(rec.freq==='weekly'){
+    const target=rec.day??1;
+    do { d.setDate(d.getDate()+1) } while(d.getDay()!==target);
+  } else if(rec.freq==='monthly'){
+    const target=rec.date??1;
+    d.setMonth(d.getMonth()+(d.getDate()>=target?1:0));
+    d.setDate(Math.min(target, new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  }
+  return d.toISOString().slice(0,10);
+}
+function isRoutineDue(card){
+  return card.recurrence && card.nextDue && card.nextDue <= todayStr();
+}
+function activateDueRoutines(){
+  let changed=false;
+  data.cards.forEach(c=>{
+    if(c.recurrence && c.nextDue && c.nextDue<=todayStr() && c.status!=='a-faire'){
+      c.status='a-faire';
+      changed=true;
+    }
+  });
+  if(changed) save();
+}
+function countDueRoutines(){
+  return data.cards.filter(c=>isRoutineDue(c)&&c.status!=='fait').length;
+}
+function formatDueDate(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const months=['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aout','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+}
+function updateRecurFields(){
+  const freq=document.getElementById('fRecurFreq').value;
+  document.getElementById('recurDayWrap').style.display=freq==='weekly'?'inline':'none';
+  document.getElementById('recurDateWrap').style.display=freq==='monthly'?'inline':'none';
+}
+function showRecurrenceIfRoutine(){
+  const isRoutine=document.querySelector('#fCats input[value="routine"]').checked;
+  document.getElementById('recurrenceFields').classList.toggle('visible',isRoutine);
+}
+
 async function load(){
   try{
     const res=await fetch(FB_URL+'.json');
@@ -554,6 +627,7 @@ async function load(){
       data.cards=arr;
     }
     sanitizeCards();
+    activateDueRoutines();
   }catch{
     data={cards:[]};
   }
@@ -603,7 +677,9 @@ function renderTabs() {
   items.forEach(item => {
     const btn = document.createElement('button');
     btn.className = 'side-tab' + (item.id === currentTab ? ' active' : '');
-    btn.innerHTML = `<span class="side-tab-icon">${item.icon}</span><span class="side-tab-label">${item.title}</span>`;
+    let badge='';
+    if(item.id==='routine'){const n=countDueRoutines();if(n>0)badge=`<span class="tab-badge">${n}</span>`}
+    btn.innerHTML = `<span class="side-tab-icon">${item.icon}</span><span class="side-tab-label">${item.title}${badge}</span>`;
     btn.addEventListener('click', () => {
       currentTab = item.id;
       expandedCardId = null;
@@ -635,7 +711,7 @@ function toggleViewMode() {
 function buildCard(card,isMirror){
   const c=document.createElement('div');
   const isDone=card.status==='fait';
-  c.className='card'+(isDone?' done-card':'')+(card.urgent?' card-urgent':'')+(isMirror?' urgent-mirror':'');
+  c.className='card'+(isDone?' done-card':'')+(card.urgent?' card-urgent':'')+(isMirror?' urgent-mirror':'')+(isRoutineDue(card)?' card-routine-due':'');
   c.draggable=false;
   c.dataset.id=card.id;
 
@@ -653,13 +729,14 @@ function buildCard(card,isMirror){
   const doneBtn=!isDone&&!isMirror?`<button class="btn-done" title="Fait">&#10003;</button>`:'';
   const urgentBtn=!isDone?`<button class="btn-urgent${card.urgent?' is-urgent':''}" title="Urgent">!</button>`:'';
   const originLabel=isMirror?`<div class="card-origin">${cats.map(cid=>(CATEGORIES.find(c=>c.id===cid)||{}).title||'').join(', ')} · ${esc((st||{}).title||'')}</div>`:'';
+  const nextDueLabel=card.recurrence&&card.nextDue?`<div class="card-next-due">Prochain : ${formatDueDate(card.nextDue)}</div>`:'';
 
   c.innerHTML=`
     ${doneBtn}${!isMirror?urgentBtn:''}
     <div class="card-title">${esc(card.title)}</div>
     <div class="card-desc">${esc(card.desc)}</div>
     <div class="card-tags">${tagHtml}${card.url?`<a class="btn-go" href="${esc(card.url)}" target="_blank" onclick="event.stopPropagation()">Go &rarr;</a>`:''}</div>
-    ${originLabel}
+    ${nextDueLabel}${originLabel}
   `;
 
   const db=c.querySelector('.btn-done');
@@ -700,7 +777,7 @@ function renderMobile() {
 
   let cards;
   if (currentTab === 'urgent') {
-    cards = data.cards.filter(c => c.urgent && c.status !== 'fait');
+    cards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
   } else if (viewMode === 'category') {
     cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   } else {
@@ -804,7 +881,7 @@ function renderDesktop() {
   // Filter cards by active tab
   let tabCards;
   if (currentTab === 'urgent') {
-    tabCards = data.cards.filter(c => c.urgent && c.status !== 'fait');
+    tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
   } else if (viewMode === 'category') {
     tabCards = getTabCards(currentTab);
   } else {
@@ -849,10 +926,19 @@ function renderDesktop() {
 
 function markDone(cardId){
   const card=data.cards.find(c=>c.id===cardId);
-  showConfirm('Marquer "'+card.title+'" comme fait ?',()=>{
-    card.status='fait';card.urgent=false;card.done=true;card.doneAt=Date.now();
-    save();render();
-  });
+  if(card.recurrence){
+    showConfirm('Marquer "'+card.title+'" comme fait ? (reviendra a la prochaine occurrence)',()=>{
+      card.nextDue=calcNextDue(card.recurrence, todayStr());
+      card.status='a-faire';
+      card.lastDoneAt=Date.now();
+      save();render();
+    });
+  } else {
+    showConfirm('Marquer "'+card.title+'" comme fait ?',()=>{
+      card.status='fait';card.urgent=false;card.done=true;card.doneAt=Date.now();
+      save();render();
+    });
+  }
 }
 
 function toggleUrgent(cardId){
@@ -911,6 +997,16 @@ function openModal(cardId){
   document.getElementById('fStatus').value=card.status;
   document.getElementById('fUrgent').checked=!!card.urgent;
   document.getElementById('fUrl').value=card.url||'';
+  // Recurrence
+  if(card.recurrence){
+    document.getElementById('fRecurFreq').value=card.recurrence.freq||'';
+    if(card.recurrence.day!=null)document.getElementById('fRecurDay').value=card.recurrence.day;
+    if(card.recurrence.date!=null)document.getElementById('fRecurDate').value=card.recurrence.date;
+  } else {
+    document.getElementById('fRecurFreq').value='';
+  }
+  updateRecurFields();
+  showRecurrenceIfRoutine();
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>{document.getElementById('fTitle').focus();autoResize()},50);
 }
@@ -927,8 +1023,11 @@ function openModalNew(tabOrGroup, statusOverride){
   document.getElementById('fTags').value='';
   document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
+  document.getElementById('fRecurFreq').value='';
+  updateRecurFields();
   // Always pre-select the active tab's category
   setCatChecks([tab ? tab.id : currentTab]);
+  showRecurrenceIfRoutine();
   // Status: use override (desktop column) or default 'a-faire'
   document.getElementById('fStatus').value = statusOverride || 'a-faire';
   document.getElementById('modalBg').classList.add('open');
@@ -948,6 +1047,15 @@ function saveCard(){
   const url=document.getElementById('fUrl').value.trim()||null;
   const editId=document.getElementById('fId').value;
 
+  // Build recurrence object if routine
+  let recurrence=null, nextDue=null;
+  const recurFreq=document.getElementById('fRecurFreq').value;
+  if(recurFreq && cats.includes('routine')){
+    recurrence={freq:recurFreq};
+    if(recurFreq==='weekly') recurrence.day=+document.getElementById('fRecurDay').value;
+    if(recurFreq==='monthly') recurrence.date=+document.getElementById('fRecurDate').value;
+  }
+
   if(editId){
     const card=data.cards.find(c=>c.id===+editId);
     card.title=title;card.desc=desc;card.tags=tags;card.url=url;
@@ -955,9 +1063,13 @@ function saveCard(){
     card.status=status;card.urgent=urgent;
     card.done=status==='fait';
     if(status==='fait'&&!card.doneAt)card.doneAt=Date.now();
+    if(recurrence){card.recurrence=recurrence;if(!card.nextDue)card.nextDue=calcNextDue(recurrence,todayStr())}
+    else{delete card.recurrence;delete card.nextDue}
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
-    data.cards.push({id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait'});
+    const newCard={id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait'};
+    if(recurrence){newCard.recurrence=recurrence;newCard.nextDue=todayStr()}
+    data.cards.push(newCard);
   }
   save();closeModal();render();
 }
@@ -1183,6 +1295,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 const descEl=document.getElementById('fDesc');
 function autoResize(){descEl.style.height='auto';descEl.style.height=descEl.scrollHeight+'px'}
 descEl.addEventListener('input',autoResize);
+
+// Toggle recurrence fields when Routine checkbox changes
+document.querySelectorAll('#fCats input').forEach(cb=>cb.addEventListener('change',showRecurrenceIfRoutine));
 
 load().then(()=>{render();setAppDate();});
 
