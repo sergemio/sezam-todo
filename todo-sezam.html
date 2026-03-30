@@ -834,7 +834,7 @@ function renderDesktop() {
         <span class="col-icon">${col.icon}</span>
         <span class="col-title">${esc(col.title)}</span>
         <span class="col-count">${cards.length}</span>
-        <button class="col-add" onclick="openModalNew('${col.id}')" title="Ajouter">+</button>
+        <button class="col-add" onclick="openModalNew(currentTab,'${col.id}')" title="Ajouter">+</button>
       </div>
       <div class="col-cards" data-group="${col.id}"></div>
     `;
@@ -912,10 +912,9 @@ function openModal(cardId){
   setTimeout(()=>{document.getElementById('fTitle').focus();autoResize()},50);
 }
 
-function openModalNew(groupId){
-  // Résoudre tab ID → première catégorie Firebase correspondante
-  const tab = TABS.find(t => t.id === groupId);
-  const resolvedCat = tab ? tab.cats[0] : groupId; // cats[0] = default; modal lets user correct before saving
+function openModalNew(tabOrGroup, statusOverride){
+  const tab = TABS.find(t => t.id === tabOrGroup);
+  const catToCheck = tab ? tab.cats[0] : tabOrGroup;
 
   document.getElementById('modalTitle').textContent='Nouvelle carte';
   document.getElementById('btnDel').style.display='none';
@@ -925,13 +924,10 @@ function openModalNew(groupId){
   document.getElementById('fTags').value='';
   document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
-  if(viewMode==='category'){
-    setCatChecks([resolvedCat]);
-    document.getElementById('fStatus').value='a-faire';
-  } else {
-    setCatChecks(['business']);
-    document.getElementById('fStatus').value=resolvedCat;
-  }
+  // Always pre-select the active tab's category
+  setCatChecks([tab ? tab.id : currentTab]);
+  // Status: use override (desktop column) or default 'a-faire'
+  document.getElementById('fStatus').value = statusOverride || 'a-faire';
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
 }
