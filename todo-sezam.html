@@ -544,6 +544,12 @@ async function load(){
     if(res.ok) data=await res.json();
     else throw new Error();
     if(!data||!data.cards) data={cards:[]};
+    // Firebase may return cards as object instead of array — normalize
+    if(data.cards&&!Array.isArray(data.cards)){
+      const arr=[];
+      Object.keys(data.cards).forEach(k=>{if(data.cards[k])arr.push(data.cards[k])});
+      data.cards=arr;
+    }
     sanitizeCards();
   }catch{
     data={cards:[]};
