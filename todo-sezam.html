@@ -968,9 +968,13 @@ function deleteCard(){
 
 function reorderCard(card,groupId,beforeCardId){
   // Get all cards in this group in current order
+  // In category view, columns are statuses filtered by active tab
   let group;
-  if(viewMode==='category') group=data.cards.filter(c=>getCats(c).includes(groupId)&&c.status!=='fait');
-  else group=data.cards.filter(c=>c.status===groupId);
+  if(viewMode==='category'){
+    const tab=TABS.find(t=>t.id===currentTab);
+    const tabCats=tab?tab.cats:[];
+    group=data.cards.filter(c=>c.status===groupId&&getCats(c).some(cat=>tabCats.includes(cat)));
+  } else group=data.cards.filter(c=>c.status===groupId);
 
   // Remove card from group
   group=group.filter(c=>c.id!==card.id);
