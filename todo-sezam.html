@@ -56,7 +56,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(59,130,246,.08)}
 .card.dragging{opacity:.4;transform:rotate(2deg)}
 .card-ghost{position:fixed;pointer-events:none;z-index:200;opacity:.85;transform:rotate(2deg);box-shadow:0 8px 24px rgba(0,0,0,.15);transition:none}
-.drop-placeholder{border:2px dashed var(--accent);border-radius:8px;background:rgba(59,130,246,.06);transition:height .15s;margin:5px 0}
+.drop-placeholder{border:2px dashed var(--accent);border-radius:8px;background:rgba(59,130,246,.1);transition:height .15s;margin:8px 0;min-height:48px}
+.col-cards.dragging-over .card{transition:transform .2s ease,margin .2s ease}
 .card+.card{margin-top:10px}
 .card-title{font-size:.82rem;font-weight:600;line-height:1.3;margin-bottom:4px;padding-right:50px}
 .card-desc{font-size:.7rem;color:var(--text2);line-height:1.4;opacity:.75}
@@ -1085,6 +1086,7 @@ function startDrag(e,card,el,touchHeld){
     }
     const cardRef=dragCard;
     // Clean up visuals
+    document.querySelectorAll('.col-cards.dragging-over').forEach(c=>c.classList.remove('dragging-over'));
     if(ghost)ghost.remove();if(placeholder)placeholder.remove();
     if(dragEl)dragEl.style.display='';
     ghost=null;placeholder=null;dragEl=null;dragCard=null;isDragging=false;
@@ -1149,6 +1151,9 @@ function movePlaceholder(x,y){
     if(d<bestDist){bestDist=d;best=col;}
   });
   if(!best)return;
+  // Mark active drop column
+  document.querySelectorAll('.col-cards.dragging-over').forEach(c=>c.classList.remove('dragging-over'));
+  best.classList.add('dragging-over');
   const cards=[...best.querySelectorAll('.card')];
   let before=null;
   for(const c of cards){
