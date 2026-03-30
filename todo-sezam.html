@@ -1111,13 +1111,13 @@ function startDrag(e,card,el,touchHeld){
     }
 
     if(viewMode==='category'){
-      const cats=getCats(cardRef);
-      if(cats.includes(gid)){
-        // Same category — reorder via sort weight
+      // Columns are statuses — same status = reorder, different = change status
+      if(cardRef.status===gid){
         reorderCard(cardRef,gid,neighborId);
-        return;
+      } else {
+        cardRef.status=gid;
+        save();render();
       }
-      showCatChoice(cardRef,gid,cats);
       return;
     }
 
