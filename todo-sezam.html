@@ -337,7 +337,10 @@ body{display:flex;flex-direction:column;overflow:hidden}
     cursor: pointer;
     transition: background .1s;
     position: relative;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
   }
+  .mobile-card:focus, .mobile-card:focus-visible, .mobile-card:active { outline: none; }
   .mobile-card.urgent-card { background: #fff5f5; }
   .mobile-card-check {
     width: 22px;
