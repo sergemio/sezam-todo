@@ -1017,17 +1017,52 @@ function renderDesktop() {
   const board = document.getElementById('board');
   board.innerHTML = '';
 
+  // Sort: urgent first, then sortOrder
+  const sortCards = (a, b) => {
+    if (a.urgent && !b.urgent) return -1;
+    if (!a.urgent && b.urgent) return 1;
+    return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+  };
+
+  // ALL tab — columns are categories (Urgent, MKTG, Business, Tech, Routine, Events)
+  if (currentTab === 'all') {
+    const allActive = data.cards.filter(c => c.status !== 'fait');
+    const columns = [
+      { id:'urgent', icon:'🔴', title:'Urgent', filter: c => c.urgent || isRoutineDue(c) },
+      ...TABS.map(t => ({ id:t.id, icon:t.icon, title:t.title, filter: c => getCats(c).some(cat => t.cats.includes(cat)) && !(c.urgent || isRoutineDue(c)) }))
+    ];
+    columns.forEach(col => {
+      const cards = allActive.filter(col.filter).sort(sortCards);
+      if (cards.length === 0) return;
+      const div = document.createElement('div');
+      div.className = 'column';
+      div.dataset.group = col.id;
+      div.dataset.colMode = 'category';
+      div.innerHTML = `
+        <div class="col-header">
+          <span class="col-icon">${col.icon}</span>
+          <span class="col-title">${esc(col.title)}</span>
+          <span class="col-count">${cards.length}</span>
+          <button class="col-add" onclick="openModalNew('${col.id}')" title="Ajouter">+</button>
+        </div>
+        <div class="col-cards" data-group="${col.id}"></div>
+      `;
+      const container = div.querySelector('.col-cards');
+      cards.forEach(card => container.appendChild(buildCard(card, false)));
+      board.appendChild(div);
+    });
+    return;
+  }
+
   // Filter cards by active tab
   let tabCards;
-  if (currentTab === 'all') {
-    tabCards = data.cards.filter(c => c.status !== 'fait');
-  } else if (currentTab === 'urgent') {
+  if (currentTab === 'urgent') {
     tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
   } else {
     tabCards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   }
 
-  // Columns are always statuses (kanban model)
+  // Columns are statuses (kanban model)
   STATUSES.filter(s => s.id !== 'fait').forEach(col => {
     const cards = tabCards.filter(c => c.status === col.id);
     cards.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
@@ -1375,6 +1410,24 @@ function startDrag(e,card,el,touchHeld){
         cardRef.status='fait';cardRef.urgent=false;cardRef.done=true;cardRef.doneAt=Date.now();
         save();render();
       },()=>{render()});
+      return;
+    }
+
+    // ALL view — columns are categories; dropping changes the card's category
+    if(currentTab==='all'){
+      const cats=getCats(cardRef);
+      // Same column already (matching tab) = reorder
+      const tab=TABS.find(t=>t.id===gid);
+      if(tab && cats.some(c=>tab.cats.includes(c))){
+        reorderCard(cardRef,gid,neighborId);
+      } else if(gid==='urgent'){
+        cardRef.urgent=true;
+        save();render();
+      } else if(tab){
+        cardRef.categories=[tab.cats[0]];
+        delete cardRef.category;
+        save();render();
+      }
       return;
     }
 
