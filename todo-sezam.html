@@ -148,45 +148,134 @@ body{display:flex;flex-direction:column;overflow:hidden}
   .column{min-width:250px;max-width:280px}
 }
 
-/* ===== SHARED SIDE-TABS LAYOUT ===== */
+/* ===== APP LAYOUT (vertical stack: header + main + bottom nav) ===== */
 .app-layout {
   display: flex;
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
   height: 100%;
 }
 
-/* Side tabs */
-.side-tabs {
+/* ===== BOTTOM NAV (replaces side tabs) ===== */
+.bottom-nav-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
   display: flex;
-  flex-direction: column;
-  width: 52px;
-  background: #1a1a2e;
-  flex-shrink: 0;
-  padding: 8px 0;
-  gap: 4px;
-  overflow: hidden;
+  justify-content: center;
+  padding: 0;
+  pointer-events: none;
 }
-.side-tab {
+.bottom-nav {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  padding: 8px 6px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+  gap: 2px;
+}
+.nav-item {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 600px;
+  border-radius: 14px;
+  overflow: visible;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  padding: 0;
+  min-height: 44px;
+}
+.nav-item-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity .35s ease, transform .35s cubic-bezier(.2,.8,.3,1);
+  pointer-events: none;
+  z-index: 0;
+}
+.nav-item:hover .nav-item-glow,
+.nav-item.active .nav-item-glow {
+  opacity: 1;
+  transform: scale(1.6);
+}
+.nav-face {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px 4px;
-  cursor: pointer;
-  border-radius: 8px;
-  margin: 0 4px;
-  transition: .15s;
-  border: none;
-  background: none;
-  color: rgba(255,255,255,.45);
-  font-family: var(--font);
+  gap: 2px;
+  padding: 6px 4px;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  color: var(--text2);
+  transition: color .25s ease, transform .5s cubic-bezier(.2,.8,.3,1);
+  transform-style: preserve-3d;
+  transform-origin: center bottom;
+  border-radius: 14px;
 }
-.side-tab:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
-.side-tab.active { background: var(--accent); color: #fff; }
-.side-tab-icon { font-size: 1.1rem; }
-.side-tab-label { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; writing-mode: horizontal-tb; }
+.nav-face-back {
+  position: absolute;
+  inset: 0;
+  transform-origin: center top;
+  transform: rotateX(90deg);
+  opacity: 0;
+}
+.nav-item:hover .nav-face-front { transform: rotateX(-90deg); opacity: 0; }
+.nav-item:hover .nav-face-back { transform: rotateX(0deg); opacity: 1; }
+.nav-item.active .nav-face-front,
+.nav-item.active .nav-face-back { color: var(--text); }
+.nav-item .nav-icon {
+  font-size: 1.15rem;
+  transition: color .25s ease, transform .25s ease;
+}
+.nav-item .nav-label {
+  font-size: .58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.nav-item.active .nav-icon { transform: scale(1.1); }
+/* Per-tab accent colors (active + hover) */
+.nav-item.tab-urgent:hover .nav-icon, .nav-item.tab-urgent.active .nav-icon { color: #dc2626; }
+.nav-item.tab-mktg:hover .nav-icon, .nav-item.tab-mktg.active .nav-icon { color: #ea580c; }
+.nav-item.tab-business:hover .nav-icon, .nav-item.tab-business.active .nav-icon { color: #16a34a; }
+.nav-item.tab-tech:hover .nav-icon, .nav-item.tab-tech.active .nav-icon { color: #9333ea; }
+.nav-item.tab-routine:hover .nav-icon, .nav-item.tab-routine.active .nav-icon { color: #2563eb; }
+.nav-item.tab-events:hover .nav-icon, .nav-item.tab-events.active .nav-icon { color: #ca8a04; }
+.nav-item.tab-a-faire:hover .nav-icon, .nav-item.tab-a-faire.active .nav-icon { color: #0369a1; }
+.nav-item.tab-en-cours:hover .nav-icon, .nav-item.tab-en-cours.active .nav-icon { color: #a16207; }
+.nav-item.tab-a-surveiller:hover .nav-icon, .nav-item.tab-a-surveiller.active .nav-icon { color: #0284c7; }
+.nav-item.tab-fait:hover .nav-icon, .nav-item.tab-fait.active .nav-icon { color: #15803d; }
+.nav-item .nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .55rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  z-index: 2;
+}
 
 /* Main content area */
 .app-main {
@@ -423,16 +512,31 @@ body{display:flex;flex-direction:column;overflow:hidden}
   }
 }
 
-/* ===== DESKTOP with side tabs ===== */
+/* ===== DESKTOP ===== */
 @media(min-width:701px) {
   .topbar { display: none; }
-  .side-tabs { width: 160px; }
-  .side-tab { flex-direction: row; justify-content: flex-start; padding: 10px 12px; gap: 8px; }
-  .side-tab-label { font-size: .75rem; writing-mode: horizontal-tb; letter-spacing: 0; }
-  .side-tab-icon { font-size: 1rem; }
-  /* Board stays as-is, just filtered */
-  #board { padding: 14px 16px; gap: 12px; }
+  .bottom-nav-wrap { bottom: 16px; padding: 0 16px; }
+  .bottom-nav {
+    width: auto;
+    border-radius: 28px;
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 8px 28px rgba(0,0,0,.12);
+    padding: 8px 12px;
+    gap: 4px;
+  }
+  .nav-item { flex: none; min-width: 78px; padding: 4px 6px; }
+  .nav-face { flex-direction: row; gap: 8px; padding: 8px 12px; }
+  .nav-item .nav-label { font-size: .72rem; letter-spacing: .02em; }
+  .nav-item .nav-icon { font-size: 1.05rem; }
+  .nav-item .nav-badge { top: -4px; right: 0; }
+  /* Leave room for floating nav */
+  #board { padding: 14px 16px 90px; gap: 12px; }
   .column { min-width: 240px; max-width: 290px; }
+}
+/* Mobile: extra padding at bottom for fixed nav */
+@media(max-width:700px) {
+  .mobile-list { padding-bottom: 70px !important; }
+  .mobile-add-btn { bottom: 76px !important; }
 }
 </style>
 </head>
@@ -440,7 +544,6 @@ body{display:flex;flex-direction:column;overflow:hidden}
 
 <!-- App layout (shared desktop + mobile) -->
 <div class="app-layout" id="appLayout">
-  <div class="side-tabs" id="sideTabs"></div>
   <div class="app-main">
     <div class="app-header">
       <span class="app-header-date" id="appDate"></span>
@@ -454,6 +557,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <!-- Desktop board -->
     <div class="board" id="board"></div>
   </div>
+</div>
+
+<!-- Bottom floating nav (replaces side tabs) -->
+<div class="bottom-nav-wrap">
+  <nav class="bottom-nav" id="sideTabs"></nav>
 </div>
 
 <!-- Mobile add button -->
@@ -511,6 +619,12 @@ body{display:flex;flex-direction:column;overflow:hidden}
       </span>
     </div>
     <label style="margin-top:14px;display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem"><input type="checkbox" id="fUrgent" style="width:auto"> Marquer comme urgent</label>
+    <div style="margin-top:10px">
+      <button type="button" class="btn" style="font-size:.7rem;padding:3px 8px" onclick="document.getElementById('claudeCtxWrap').style.display=document.getElementById('claudeCtxWrap').style.display==='none'?'block':'none'">🧠 Claude Context</button>
+      <div id="claudeCtxWrap" style="display:none;margin-top:6px">
+        <textarea id="fClaudeContext" style="width:100%;min-height:80px;font-size:.72rem;font-family:monospace;border:1px solid var(--border);border-radius:6px;padding:8px;background:#f8f9fa" placeholder='{"skills":[],"memory":[],"frameworks":[],"notes":""}'></textarea>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-danger" id="btnDel" style="display:none" onclick="deleteCard()">Supprimer</button>
       <div style="flex:1"></div>
@@ -661,26 +775,47 @@ function renderTabs() {
   if (!container) return;
   container.innerHTML = '';
 
-  // Urgent tab — always pinned at top, cross-cutting across all view modes
-  const urgentBtn = document.createElement('button');
-  urgentBtn.className = 'side-tab urgent-tab' + (currentTab === 'urgent' ? ' active' : '');
-  urgentBtn.innerHTML = `<span class="side-tab-icon">🔴</span><span class="side-tab-label">Urgent</span>`;
-  urgentBtn.addEventListener('click', () => { currentTab = 'urgent'; expandedCardId = null; render(); });
-  container.appendChild(urgentBtn);
+  // Build full list: Urgent first, then categories or statuses
+  const allItems = [
+    { id:'urgent', icon:'🔴', title:'Urgent' },
+    ...(viewMode === 'category' ? TABS : STATUSES)
+  ];
 
-  // Separator
-  const sep = document.createElement('div');
-  sep.style.cssText = 'height:1px;background:rgba(255,255,255,.1);margin:4px 8px;flex-shrink:0';
-  container.appendChild(sep);
+  // Per-tab gradient colors for the glow effect
+  const gradients = {
+    urgent:   'radial-gradient(circle, rgba(220,38,38,.18) 0%, rgba(220,38,38,.06) 50%, rgba(220,38,38,0) 100%)',
+    mktg:     'radial-gradient(circle, rgba(249,115,22,.18) 0%, rgba(234,88,12,.06) 50%, rgba(234,88,12,0) 100%)',
+    business: 'radial-gradient(circle, rgba(34,197,94,.18) 0%, rgba(22,163,74,.06) 50%, rgba(21,128,61,0) 100%)',
+    tech:     'radial-gradient(circle, rgba(147,51,234,.18) 0%, rgba(126,34,206,.06) 50%, rgba(88,28,135,0) 100%)',
+    routine:  'radial-gradient(circle, rgba(59,130,246,.18) 0%, rgba(37,99,235,.06) 50%, rgba(29,78,216,0) 100%)',
+    events:   'radial-gradient(circle, rgba(202,138,4,.18) 0%, rgba(161,98,7,.06) 50%, rgba(133,77,14,0) 100%)',
+    'a-faire':      'radial-gradient(circle, rgba(3,105,161,.18) 0%, rgba(2,132,199,.06) 50%, rgba(2,132,199,0) 100%)',
+    'en-cours':     'radial-gradient(circle, rgba(161,98,7,.18) 0%, rgba(202,138,4,.06) 50%, rgba(202,138,4,0) 100%)',
+    'a-surveiller': 'radial-gradient(circle, rgba(2,132,199,.18) 0%, rgba(56,189,248,.06) 50%, rgba(56,189,248,0) 100%)',
+    fait:           'radial-gradient(circle, rgba(21,128,61,.18) 0%, rgba(22,163,74,.06) 50%, rgba(22,163,74,0) 100%)'
+  };
 
-  // Mode tabs (categories or statuses)
-  const items = viewMode === 'category' ? TABS : STATUSES;
-  items.forEach(item => {
+  allItems.forEach(item => {
     const btn = document.createElement('button');
-    btn.className = 'side-tab' + (item.id === currentTab ? ' active' : '');
-    let badge='';
-    if(item.id==='routine'){const n=countDueRoutines();if(n>0)badge=`<span class="tab-badge">${n}</span>`}
-    btn.innerHTML = `<span class="side-tab-icon">${item.icon}</span><span class="side-tab-label">${item.title}${badge}</span>`;
+    btn.className = `nav-item tab-${item.id}` + (item.id === currentTab ? ' active' : '');
+    let badge = '';
+    if (item.id === 'routine') {
+      const n = countDueRoutines();
+      if (n > 0) badge = `<span class="nav-badge">${n}</span>`;
+    }
+    const grad = gradients[item.id] || 'radial-gradient(circle, rgba(99,102,241,.15) 0%, rgba(99,102,241,0) 100%)';
+    btn.innerHTML = `
+      <span class="nav-item-glow" style="background:${grad}"></span>
+      <span class="nav-face nav-face-front">
+        <span class="nav-icon">${item.icon}</span>
+        <span class="nav-label">${item.title}</span>
+      </span>
+      <span class="nav-face nav-face-back">
+        <span class="nav-icon">${item.icon}</span>
+        <span class="nav-label">${item.title}</span>
+      </span>
+      ${badge}
+    `;
     btn.addEventListener('click', () => {
       currentTab = item.id;
       expandedCardId = null;
@@ -1008,6 +1143,14 @@ function openModal(cardId){
   }
   updateRecurFields();
   showRecurrenceIfRoutine();
+  // Claude Context
+  if(card.claudeContext){
+    document.getElementById('fClaudeContext').value=JSON.stringify(card.claudeContext,null,2);
+    document.getElementById('claudeCtxWrap').style.display='none';
+  } else {
+    document.getElementById('fClaudeContext').value='';
+    document.getElementById('claudeCtxWrap').style.display='none';
+  }
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>{document.getElementById('fTitle').focus();autoResize()},50);
 }
@@ -1031,6 +1174,8 @@ function openModalNew(tabOrGroup, statusOverride){
   showRecurrenceIfRoutine();
   // Status: use override (desktop column) or default 'a-faire'
   document.getElementById('fStatus').value = statusOverride || 'a-faire';
+  document.getElementById('fClaudeContext').value='';
+  document.getElementById('claudeCtxWrap').style.display='none';
   document.getElementById('modalBg').classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
 }
@@ -1057,6 +1202,11 @@ function saveCard(){
     if(recurFreq==='monthly') recurrence.date=+document.getElementById('fRecurDate').value;
   }
 
+  // Parse Claude Context
+  let claudeContext=null;
+  const ctxRaw=document.getElementById('fClaudeContext').value.trim();
+  if(ctxRaw){try{claudeContext=JSON.parse(ctxRaw)}catch(e){alert('Claude Context JSON invalide');return}}
+
   if(editId){
     const card=data.cards.find(c=>c.id===+editId);
     card.title=title;card.desc=desc;card.tags=tags;card.url=url;
@@ -1066,10 +1216,12 @@ function saveCard(){
     if(status==='fait'&&!card.doneAt)card.doneAt=Date.now();
     if(recurrence){card.recurrence=recurrence;if(!card.nextDue)card.nextDue=calcNextDue(recurrence,todayStr())}
     else{delete card.recurrence;delete card.nextDue}
+    if(claudeContext)card.claudeContext=claudeContext;else delete card.claudeContext;
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
     const newCard={id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait'};
     if(recurrence){newCard.recurrence=recurrence;newCard.nextDue=todayStr()}
+    if(claudeContext)newCard.claudeContext=claudeContext;
     data.cards.push(newCard);
   }
   save();closeModal();render();
