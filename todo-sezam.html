@@ -314,45 +314,6 @@ body{display:flex;flex-direction:column;overflow:hidden}
   align-items: center;
   gap: 8px;
 }
-/* Segmented control — group-by toggle with sliding indicator */
-.seg-control {
-  display: inline-flex;
-  background: #eef0f3;
-  border-radius: 999px;
-  padding: 3px;
-  position: relative;
-  font-family: var(--font);
-}
-.seg-thumb {
-  position: absolute;
-  top: 3px; bottom: 3px;
-  background: #fff;
-  border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
-  transition: left .35s cubic-bezier(.5,1.4,.5,1), width .35s cubic-bezier(.5,1.4,.5,1);
-  z-index: 0;
-}
-.seg-control button {
-  position: relative;
-  z-index: 1;
-  border: none;
-  background: none;
-  padding: 5px 12px;
-  font-size: .7rem;
-  font-weight: 600;
-  font-family: var(--font);
-  color: var(--text2);
-  cursor: pointer;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: color .25s ease;
-  white-space: nowrap;
-}
-.seg-control button.active { color: var(--text); }
-.seg-control button:not(.active):hover { color: var(--text); }
-.seg-icon { font-size: .85rem; }
 
 /* ===== MOBILE ===== */
 @media(max-width:700px) {
@@ -584,13 +545,6 @@ body{display:flex;flex-direction:column;overflow:hidden}
         <span class="app-header-date" id="appDate"></span>
         <span class="chip chip-red" id="statUrgent" style="cursor:pointer" onclick="currentTab='urgent';expandedCardId=null;render()"></span>
       </div>
-      <div class="app-header-right">
-        <div class="seg-control" id="segViewMode">
-          <span class="seg-thumb" id="segThumb"></span>
-          <button id="segCat" onclick="setViewMode('category')"><span class="seg-icon">📂</span>Categorie</button>
-          <button id="segStat" onclick="setViewMode('status')"><span class="seg-icon">📊</span>Statut</button>
-        </div>
-      </div>
     </div>
     <!-- Mobile list -->
     <div class="mobile-list" id="mobileList"></div>
@@ -711,7 +665,6 @@ function getTabCards(tabId) {
 }
 
 let data;
-let viewMode='category';
 let currentTab = 'all'; // tab actif pour navigation mobile
 let expandedCardId = null; // pour accordion mobile
 function getCats(card){
@@ -819,7 +772,7 @@ function renderTabs() {
   const allItems = [
     { id:'all', icon:'📋', title:'All' },
     { id:'urgent', icon:'🔴', title:'Urgent' },
-    ...(viewMode === 'category' ? TABS : STATUSES)
+    ...TABS
   ];
 
   // Per-tab gradient colors for the glow effect
@@ -871,28 +824,6 @@ function renderTabs() {
   if (addBtn) addBtn.style.display = window.innerWidth <= 700 ? 'flex' : 'none';
 }
 
-function setViewMode(mode) {
-  if (viewMode === mode) return;
-  viewMode = mode;
-  // Keep cross-cutting tabs selected if active; otherwise reset to first item of new mode
-  if (currentTab !== 'urgent' && currentTab !== 'all') {
-    currentTab = viewMode === 'category' ? TABS[0].id : STATUSES[0].id;
-  }
-  expandedCardId = null;
-  updateSegControl();
-  render();
-}
-function updateSegControl() {
-  const cat = document.getElementById('segCat');
-  const stat = document.getElementById('segStat');
-  const thumb = document.getElementById('segThumb');
-  if (!cat || !stat || !thumb) return;
-  cat.classList.toggle('active', viewMode === 'category');
-  stat.classList.toggle('active', viewMode === 'status');
-  const target = viewMode === 'category' ? cat : stat;
-  thumb.style.left = target.offsetLeft + 'px';
-  thumb.style.width = target.offsetWidth + 'px';
-}
 
 function buildCard(card,isMirror){
   const c=document.createElement('div');
@@ -904,7 +835,7 @@ function buildCard(card,isMirror){
   const cats=getCats(card);
   const st=STATUSES.find(s=>s.id===card.status);
   const catTags=cats.map(cid=>{const ct=CATEGORIES.find(c=>c.id===cid);return ct?`<span class="tag ${CAT_TAG_CLASS[cid]||'tag-business'}">${ct.title}</span>`:''}).join('');
-  const statusTag=viewMode==='category'&&st?`<span class="tag tag-status tag-${card.status}">${st.title}</span>`:'';
+  const statusTag=st?`<span class="tag tag-status tag-${card.status}">${st.title}</span>`:'';
 
   const extraTagHtml=(card.tags||[]).map(t=>{
     const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
@@ -988,10 +919,8 @@ function renderMobile() {
   let cards;
   if (currentTab === 'urgent') {
     cards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
-  } else if (viewMode === 'category') {
-    cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   } else {
-    cards = data.cards.filter(c => c.status === currentTab);
+    cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   }
   cards.sort((a, b) => {
     if (a.urgent && !b.urgent) return -1;
@@ -1017,7 +946,7 @@ function buildMobileCard(card) {
 
   // Tags HTML
   const st = STATUSES.find(s => s.id === card.status);
-  const statusTag = viewMode === 'category' && st ? `<span class="tag tag-status tag-${card.status}">${st.title}</span>` : '';
+  const statusTag = st ? `<span class="tag tag-status tag-${card.status}">${st.title}</span>` : '';
   const extraTagHtml = (card.tags || []).map(t => {
     const cls = TAG_CLASSES[t.toLowerCase()] || 'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
@@ -1094,26 +1023,13 @@ function renderDesktop() {
     tabCards = data.cards.filter(c => c.status !== 'fait');
   } else if (currentTab === 'urgent') {
     tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
-  } else if (viewMode === 'category') {
-    tabCards = getTabCards(currentTab);
   } else {
-    tabCards = data.cards.filter(c => c.status === currentTab);
+    tabCards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   }
 
-  // Columns = statuses for category/urgent/all mode
-  const columns = viewMode === 'category' || currentTab === 'urgent' || currentTab === 'all' ? STATUSES : TABS;
-
-  columns.forEach(col => {
-    let cards;
-    if (viewMode === 'category' || currentTab === 'all') {
-      cards = tabCards.filter(c => c.status === col.id && c.status !== 'fait');
-    } else {
-      cards = tabCards.filter(c => {
-        const cats = getCats(c);
-        const tab = TABS.find(t => t.id === col.id);
-        return tab ? cats.some(cat => tab.cats.includes(cat)) : false;
-      });
-    }
+  // Columns are always statuses (kanban model)
+  STATUSES.filter(s => s.id !== 'fait').forEach(col => {
+    const cards = tabCards.filter(c => c.status === col.id);
     cards.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
     if (cards.length === 0) return;
@@ -1311,14 +1227,16 @@ function deleteCard(){
 }
 
 function reorderCard(card,groupId,beforeCardId){
-  // Get all cards in this group in current order
-  // In category view, columns are statuses filtered by active tab
+  // Group = all cards with this status, optionally filtered by current category tab
   let group;
-  if(viewMode==='category'){
-    const tab=TABS.find(t=>t.id===currentTab);
-    const tabCats=tab?tab.cats:[];
+  const tab=TABS.find(t=>t.id===currentTab);
+  if(tab){
+    const tabCats=tab.cats;
     group=data.cards.filter(c=>c.status===groupId&&getCats(c).some(cat=>tabCats.includes(cat)));
-  } else group=data.cards.filter(c=>c.status===groupId);
+  } else {
+    // 'all' or 'urgent' tab — order across all matching cards
+    group=data.cards.filter(c=>c.status===groupId);
+  }
 
   // Remove card from group
   group=group.filter(c=>c.id!==card.id);
@@ -1460,24 +1378,13 @@ function startDrag(e,card,el,touchHeld){
       return;
     }
 
-    if(viewMode==='category'){
-      // Columns are statuses — same status = reorder, different = change status
-      if(cardRef.status===gid){
-        reorderCard(cardRef,gid,neighborId);
-      } else {
-        cardRef.status=gid;
-        save();render();
-      }
-      return;
-    }
-
-    // Status view — same status = reorder, different = change
+    // Same status = reorder, different = change status
     if(cardRef.status===gid){
       reorderCard(cardRef,gid,neighborId);
-      return;
+    } else {
+      cardRef.status=gid;
+      save();render();
     }
-    cardRef.status=gid;
-    save();render();
   }
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onEnd);
@@ -1528,7 +1435,7 @@ descEl.addEventListener('input',autoResize);
 // Toggle recurrence fields when Routine checkbox changes
 document.querySelectorAll('#fCats input').forEach(cb=>cb.addEventListener('change',showRecurrenceIfRoutine));
 
-load().then(()=>{updateSegControl();render();setAppDate();});
+load().then(()=>{render();setAppDate();});
 
 let _resizeTimer;
 window.addEventListener('resize', () => {
