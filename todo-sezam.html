@@ -254,6 +254,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 }
 .nav-item.active .nav-icon { transform: scale(1.1); }
 /* Per-tab accent colors (active + hover) */
+.nav-item.tab-all:hover .nav-icon, .nav-item.tab-all.active .nav-icon { color: #6366f1; }
 .nav-item.tab-urgent:hover .nav-icon, .nav-item.tab-urgent.active .nav-icon { color: #dc2626; }
 .nav-item.tab-mktg:hover .nav-icon, .nav-item.tab-mktg.active .nav-icon { color: #ea580c; }
 .nav-item.tab-business:hover .nav-icon, .nav-item.tab-business.active .nav-icon { color: #16a34a; }
@@ -264,6 +265,14 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .nav-item.tab-en-cours:hover .nav-icon, .nav-item.tab-en-cours.active .nav-icon { color: #a16207; }
 .nav-item.tab-a-surveiller:hover .nav-icon, .nav-item.tab-a-surveiller.active .nav-icon { color: #0284c7; }
 .nav-item.tab-fait:hover .nav-icon, .nav-item.tab-fait.active .nav-icon { color: #15803d; }
+.mobile-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 6px; font-size: .68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text2); background: #f8f9fa;
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1;
+}
+.mobile-section-count { background: var(--border); color: var(--text2); padding: 1px 7px; border-radius: 10px; font-size: .62rem; }
 .nav-item .nav-badge {
   position: absolute;
   top: 2px;
@@ -672,7 +681,7 @@ function getTabCards(tabId) {
 
 let data;
 let viewMode='category';
-let currentTab = 'mktg'; // tab actif pour navigation mobile
+let currentTab = 'all'; // tab actif pour navigation mobile
 let expandedCardId = null; // pour accordion mobile
 function getCats(card){
   if(Array.isArray(card.categories))return card.categories;
@@ -775,14 +784,16 @@ function renderTabs() {
   if (!container) return;
   container.innerHTML = '';
 
-  // Build full list: Urgent first, then categories or statuses
+  // Build full list: All first, then Urgent, then categories or statuses
   const allItems = [
+    { id:'all', icon:'📋', title:'All' },
     { id:'urgent', icon:'🔴', title:'Urgent' },
     ...(viewMode === 'category' ? TABS : STATUSES)
   ];
 
   // Per-tab gradient colors for the glow effect
   const gradients = {
+    all:      'radial-gradient(circle, rgba(99,102,241,.18) 0%, rgba(99,102,241,.06) 50%, rgba(99,102,241,0) 100%)',
     urgent:   'radial-gradient(circle, rgba(220,38,38,.18) 0%, rgba(220,38,38,.06) 50%, rgba(220,38,38,0) 100%)',
     mktg:     'radial-gradient(circle, rgba(249,115,22,.18) 0%, rgba(234,88,12,.06) 50%, rgba(234,88,12,0) 100%)',
     business: 'radial-gradient(circle, rgba(34,197,94,.18) 0%, rgba(22,163,74,.06) 50%, rgba(21,128,61,0) 100%)',
@@ -911,6 +922,30 @@ function renderMobile() {
   const list = document.getElementById('mobileList');
   list.innerHTML = '';
 
+  // ALL tab — group by category
+  if (currentTab === 'all') {
+    let any = false;
+    TABS.forEach(tab => {
+      const tabCards = getTabCards(tab.id).filter(c => c.status !== 'fait');
+      tabCards.sort((a, b) => {
+        if (a.urgent && !b.urgent) return -1;
+        if (!a.urgent && b.urgent) return 1;
+        return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+      });
+      if (tabCards.length === 0) return;
+      any = true;
+      const header = document.createElement('div');
+      header.className = 'mobile-section-header';
+      header.innerHTML = `<span>${tab.icon} ${tab.title}</span><span class="mobile-section-count">${tabCards.length}</span>`;
+      list.appendChild(header);
+      tabCards.forEach(card => list.appendChild(buildMobileCard(card)));
+    });
+    if (!any) {
+      list.innerHTML = '<div style="padding:24px 16px;color:var(--text2);font-size:.82rem;text-align:center">Aucune tache</div>';
+    }
+    return;
+  }
+
   let cards;
   if (currentTab === 'urgent') {
     cards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
@@ -1016,7 +1051,9 @@ function renderDesktop() {
 
   // Filter cards by active tab
   let tabCards;
-  if (currentTab === 'urgent') {
+  if (currentTab === 'all') {
+    tabCards = data.cards.filter(c => c.status !== 'fait');
+  } else if (currentTab === 'urgent') {
     tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
   } else if (viewMode === 'category') {
     tabCards = getTabCards(currentTab);
@@ -1024,12 +1061,12 @@ function renderDesktop() {
     tabCards = data.cards.filter(c => c.status === currentTab);
   }
 
-  // Columns = statuses for category/urgent mode
-  const columns = viewMode === 'category' || currentTab === 'urgent' ? STATUSES : TABS;
+  // Columns = statuses for category/urgent/all mode
+  const columns = viewMode === 'category' || currentTab === 'urgent' || currentTab === 'all' ? STATUSES : TABS;
 
   columns.forEach(col => {
     let cards;
-    if (viewMode === 'category') {
+    if (viewMode === 'category' || currentTab === 'all') {
       cards = tabCards.filter(c => c.status === col.id && c.status !== 'fait');
     } else {
       cards = tabCards.filter(c => {
