@@ -582,7 +582,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <div class="app-header">
       <div style="display:flex;align-items:center;gap:10px">
         <span class="app-header-date" id="appDate"></span>
-        <span class="chip chip-red" id="statUrgent"></span>
+        <span class="chip chip-red" id="statUrgent" style="cursor:pointer" onclick="currentTab='urgent';expandedCardId=null;render()"></span>
       </div>
       <div class="app-header-right">
         <div class="seg-control" id="segViewMode">
