@@ -41,7 +41,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .board::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
 
 /* Column */
-.column{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-width:280px;max-width:320px;flex-shrink:0;display:flex;flex-direction:column;max-height:calc(100vh - 70px);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.column{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-width:280px;max-width:320px;flex-shrink:0;display:flex;flex-direction:column;max-height:100%;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .col-header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .col-icon{font-size:1rem}
 .col-title{font-size:.85rem;font-weight:700;flex:1}
@@ -563,8 +563,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
   .nav-item .nav-label { font-size: .72rem; letter-spacing: .02em; }
   .nav-item .nav-icon { font-size: 1.05rem; }
   .nav-item .nav-badge { top: -4px; right: 0; }
-  /* Leave room for floating nav */
-  #board { padding: 14px 16px 90px; gap: 12px; }
+  /* Leave room for floating nav at bottom */
+  #board { padding: 14px 16px 80px; gap: 12px; overflow-y: hidden; min-height: 0; }
   .column { min-width: 240px; max-width: 290px; }
 }
 /* Mobile: extra padding at bottom for fixed nav */
