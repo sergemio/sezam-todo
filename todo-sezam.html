@@ -314,20 +314,40 @@ body{display:flex;flex-direction:column;overflow:hidden}
   align-items: center;
   gap: 8px;
 }
-.btn-view-switch {
-  border: 1px solid var(--border);
-  background: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: .68rem;
-  font-weight: 700;
+/* Segmented control — group-by toggle */
+.seg-control {
+  display: inline-flex;
+  background: #eef0f3;
+  border-radius: 999px;
+  padding: 3px;
+  position: relative;
   font-family: var(--font);
-  cursor: pointer;
-  color: var(--text2);
-  transition: .15s;
 }
-.btn-view-switch:hover { border-color: var(--accent); color: var(--accent); }
-.btn-view-switch.active-status { background: var(--accent); color: #fff; border-color: var(--accent); }
+.seg-control button {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: none;
+  padding: 5px 12px;
+  font-size: .7rem;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text2);
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color .25s ease;
+  white-space: nowrap;
+}
+.seg-control button.active {
+  color: var(--text);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+}
+.seg-control button:not(.active):hover { color: var(--text); }
+.seg-icon { font-size: .85rem; }
 
 /* ===== MOBILE ===== */
 @media(max-width:700px) {
@@ -555,10 +575,15 @@ body{display:flex;flex-direction:column;overflow:hidden}
 <div class="app-layout" id="appLayout">
   <div class="app-main">
     <div class="app-header">
-      <span class="app-header-date" id="appDate"></span>
-      <div class="app-header-right">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="app-header-date" id="appDate"></span>
         <span class="chip chip-red" id="statUrgent"></span>
-        <button class="btn-view-switch" id="btnViewSwitch" onclick="toggleViewMode()">⊞ Statut</button>
+      </div>
+      <div class="app-header-right">
+        <div class="seg-control" id="segViewMode">
+          <button id="segCat" onclick="setViewMode('category')"><span class="seg-icon">📂</span>Categorie</button>
+          <button id="segStat" onclick="setViewMode('status')"><span class="seg-icon">📊</span>Statut</button>
+        </div>
       </div>
     </div>
     <!-- Mobile list -->
@@ -840,19 +865,24 @@ function renderTabs() {
   if (addBtn) addBtn.style.display = window.innerWidth <= 700 ? 'flex' : 'none';
 }
 
-function toggleViewMode() {
-  viewMode = viewMode === 'category' ? 'status' : 'category';
-  // Keep urgent tab selected if active; otherwise reset to first item of new mode
-  if (currentTab !== 'urgent') {
+function setViewMode(mode) {
+  if (viewMode === mode) return;
+  viewMode = mode;
+  // Keep cross-cutting tabs selected if active; otherwise reset to first item of new mode
+  if (currentTab !== 'urgent' && currentTab !== 'all') {
     currentTab = viewMode === 'category' ? TABS[0].id : STATUSES[0].id;
   }
   expandedCardId = null;
-  const btn = document.getElementById('btnViewSwitch');
-  if (btn) {
-    btn.textContent = viewMode === 'category' ? '⊞ Statut' : '⊞ Categorie';
-    btn.classList.toggle('active-status', viewMode === 'status');
-  }
+  updateSegControl();
   render();
+}
+function updateSegControl() {
+  const cat = document.getElementById('segCat');
+  const stat = document.getElementById('segStat');
+  if (cat && stat) {
+    cat.classList.toggle('active', viewMode === 'category');
+    stat.classList.toggle('active', viewMode === 'status');
+  }
 }
 
 function buildCard(card,isMirror){
@@ -1489,7 +1519,7 @@ descEl.addEventListener('input',autoResize);
 // Toggle recurrence fields when Routine checkbox changes
 document.querySelectorAll('#fCats input').forEach(cb=>cb.addEventListener('change',showRecurrenceIfRoutine));
 
-load().then(()=>{render();setAppDate();});
+load().then(()=>{updateSegControl();render();setAppDate();});
 
 let _resizeTimer;
 window.addEventListener('resize', () => {
