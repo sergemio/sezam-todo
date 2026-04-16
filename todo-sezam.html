@@ -314,7 +314,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
   align-items: center;
   gap: 8px;
 }
-/* Segmented control — group-by toggle */
+/* Segmented control — group-by toggle with sliding indicator */
 .seg-control {
   display: inline-flex;
   background: #eef0f3;
@@ -322,6 +322,15 @@ body{display:flex;flex-direction:column;overflow:hidden}
   padding: 3px;
   position: relative;
   font-family: var(--font);
+}
+.seg-thumb {
+  position: absolute;
+  top: 3px; bottom: 3px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  transition: left .35s cubic-bezier(.5,1.4,.5,1), width .35s cubic-bezier(.5,1.4,.5,1);
+  z-index: 0;
 }
 .seg-control button {
   position: relative;
@@ -341,11 +350,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
   transition: color .25s ease;
   white-space: nowrap;
 }
-.seg-control button.active {
-  color: var(--text);
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
-}
+.seg-control button.active { color: var(--text); }
 .seg-control button:not(.active):hover { color: var(--text); }
 .seg-icon { font-size: .85rem; }
 
@@ -581,6 +586,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
       </div>
       <div class="app-header-right">
         <div class="seg-control" id="segViewMode">
+          <span class="seg-thumb" id="segThumb"></span>
           <button id="segCat" onclick="setViewMode('category')"><span class="seg-icon">📂</span>Categorie</button>
           <button id="segStat" onclick="setViewMode('status')"><span class="seg-icon">📊</span>Statut</button>
         </div>
@@ -879,10 +885,13 @@ function setViewMode(mode) {
 function updateSegControl() {
   const cat = document.getElementById('segCat');
   const stat = document.getElementById('segStat');
-  if (cat && stat) {
-    cat.classList.toggle('active', viewMode === 'category');
-    stat.classList.toggle('active', viewMode === 'status');
-  }
+  const thumb = document.getElementById('segThumb');
+  if (!cat || !stat || !thumb) return;
+  cat.classList.toggle('active', viewMode === 'category');
+  stat.classList.toggle('active', viewMode === 'status');
+  const target = viewMode === 'category' ? cat : stat;
+  thumb.style.left = target.offsetLeft + 'px';
+  thumb.style.width = target.offsetWidth + 'px';
 }
 
 function buildCard(card,isMirror){
