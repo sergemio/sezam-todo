@@ -64,6 +64,17 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .card-routine-due{background:#ededff !important}
 .card-routine-due .card-title::before{content:'🔄 ';font-size:.7rem}
 .card-next-due{font-size:.65rem;color:var(--text2);margin-top:4px;font-style:italic}
+.card-next-due.overdue{color:#dc2626;font-style:normal;font-weight:600}
+.tag-age{background:#ececf0;color:#6b7280}
+.card-faded-30{opacity:.72}
+.card-faded-60{opacity:.48}
+.card-faded-30:hover,.card-faded-60:hover{opacity:1}
+.card-snoozed{opacity:.55;background:#f3f4f8}
+.card-woken{background:#fff7e6}
+.mobile-card.card-faded-30{opacity:.72}
+.mobile-card.card-faded-60{opacity:.48}
+.mobile-card.card-snoozed{opacity:.55}
+.mobile-card.card-woken{background:#fff7e6}
 .tab-badge{background:var(--accent);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700}
 .recurrence-fields{margin-top:8px;padding:10px;background:#f8f9fa;border-radius:8px;display:none}
 .recurrence-fields.visible{display:block}
@@ -588,12 +599,22 @@ body{display:flex;flex-direction:column;overflow:hidden}
       </div>
       <div>
         <label>Statut</label>
-        <select id="fStatus">
+        <select id="fStatus" onchange="updateSnoozeField()">
           <option value="a-faire">A faire</option>
           <option value="en-cours">En cours</option>
           <option value="a-surveiller">A surveiller</option>
           <option value="fait">Fait</option>
         </select>
+      </div>
+    </div>
+    <div class="modal-row" style="margin-top:10px">
+      <div>
+        <label>Echeance (optionnel)</label>
+        <input type="date" id="fDueDate">
+      </div>
+      <div id="snoozeWrap" style="display:none">
+        <label>Reveil (obligatoire)</label>
+        <input type="date" id="fSnoozeUntil">
       </div>
     </div>
     <div id="recurrenceFields" class="recurrence-fields">
@@ -724,6 +745,44 @@ function showRecurrenceIfRoutine(){
   document.getElementById('recurrenceFields').classList.toggle('visible',isRoutine);
 }
 
+// --- Relevance helpers ---
+function touch(card){card.touchedAt=todayStr();if(!card.createdAt)card.createdAt=todayStr()}
+function addDays(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function daysSinceTouch(card){
+  if(!card.touchedAt)return 0;
+  return Math.max(0,Math.floor((new Date(todayStr()+'T00:00:00')-new Date(card.touchedAt+'T00:00:00'))/86400000));
+}
+function isSnoozed(card){return !!card.snoozeUntil&&card.snoozeUntil>todayStr()&&card.status!=='fait'}
+function isWoken(card){return !!card.snoozeUntil&&card.snoozeUntil<=todayStr()&&card.status!=='fait'}
+function wakeSnoozedCards(){
+  let changed=false;
+  data.cards.forEach(c=>{
+    if(c.status==='a-surveiller'&&c.snoozeUntil&&c.snoozeUntil<=todayStr()){
+      c.status='a-faire'; // snoozeUntil kept as "woken" marker until card is treated
+      changed=true;
+    }
+  });
+  if(changed) save();
+}
+function relevanceBand(card){
+  if(card.urgent||isRoutineDue(card)||isWoken(card))return 1;
+  if(card.dueDate&&card.dueDate<todayStr())return 2;
+  if(card.dueDate&&card.dueDate<=addDays(todayStr(),7))return 3;
+  if(isSnoozed(card))return 5;
+  return 4;
+}
+function relevanceSort(a,b){
+  const ba=relevanceBand(a),bb=relevanceBand(b);
+  if(ba!==bb)return ba-bb;
+  if(ba===1)return (a.urgentOrder??999)-(b.urgentOrder??999);
+  if(ba===2||ba===3)return (a.dueDate||'').localeCompare(b.dueDate||'');
+  if(ba===5)return (a.snoozeUntil||'').localeCompare(b.snoozeUntil||'');
+  // band 4: most recently touched first, manual order as tiebreaker
+  const ta=a.touchedAt||'',tb=b.touchedAt||'';
+  if(ta!==tb)return tb.localeCompare(ta);
+  return (a.sortOrder??999)-(b.sortOrder??999);
+}
+
 async function load(){
   try{
     const res=await fetch(FB_URL+'.json');
@@ -738,6 +797,7 @@ async function load(){
     }
     sanitizeCards();
     activateDueRoutines();
+    wakeSnoozedCards();
   }catch{
     data={cards:[]};
   }
@@ -830,7 +890,9 @@ function renderTabs() {
 function buildCard(card,isMirror){
   const c=document.createElement('div');
   const isDone=card.status==='fait';
-  c.className='card'+(isDone?' done-card':'')+(card.urgent?' card-urgent':'')+(isMirror?' urgent-mirror':'')+(isRoutineDue(card)?' card-routine-due':'');
+  const stale=daysSinceTouch(card);
+  const fadeCls=!isDone&&!isSnoozed(card)?(stale>=60?' card-faded-60':stale>=30?' card-faded-30':''):'';
+  c.className='card'+(isDone?' done-card':'')+(card.urgent?' card-urgent':'')+(isMirror?' urgent-mirror':'')+(isRoutineDue(card)?' card-routine-due':'')+(isSnoozed(card)?' card-snoozed':'')+(isWoken(card)?' card-woken':'')+fadeCls;
   c.draggable=false;
   c.dataset.id=card.id;
 
@@ -843,19 +905,22 @@ function buildCard(card,isMirror){
     const cls=TAG_CLASSES[t.toLowerCase()]||'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
   }).join('');
-  const tagHtml=catTags+statusTag+extraTagHtml;
+  const ageTag=!isDone&&stale>=21?`<span class="tag tag-age">${stale} j</span>`:'';
+  const tagHtml=catTags+statusTag+extraTagHtml+ageTag;
 
   const doneBtn=!isDone&&!isMirror?`<button class="btn-done" title="Fait">&#10003;</button>`:'';
   const urgentBtn=!isDone?`<button class="btn-urgent${card.urgent?' is-urgent':''}" title="Urgent">!</button>`:'';
   const originLabel=isMirror?`<div class="card-origin">${cats.map(cid=>(CATEGORIES.find(c=>c.id===cid)||{}).title||'').join(', ')} · ${esc((st||{}).title||'')}</div>`:'';
   const nextDueLabel=card.recurrence&&card.nextDue?`<div class="card-next-due">Prochain : ${formatDueDate(card.nextDue)}</div>`:'';
+  const dueLabel=!card.recurrence&&card.dueDate?`<div class="card-next-due${card.dueDate<todayStr()?' overdue':''}">Echeance : ${formatDueDate(card.dueDate)}</div>`:'';
+  const snoozeLabel=isSnoozed(card)?`<div class="card-next-due">&#9208;&#65039; Reveil : ${formatDueDate(card.snoozeUntil)}</div>`:isWoken(card)?`<div class="card-next-due overdue">&#9200; Reveillee - a traiter</div>`:'';
 
   c.innerHTML=`
     ${doneBtn}${!isMirror?urgentBtn:''}
     <div class="card-title">${esc(card.title)}</div>
     <div class="card-desc">${esc(card.desc)}</div>
     <div class="card-tags">${tagHtml}${card.url?`<a class="btn-go" href="${esc(card.url)}" target="_blank" onclick="event.stopPropagation()">Go &rarr;</a>`:''}</div>
-    ${nextDueLabel}${originLabel}
+    ${nextDueLabel}${dueLabel}${snoozeLabel}${originLabel}
   `;
 
   const db=c.querySelector('.btn-done');
@@ -899,11 +964,7 @@ function renderMobile() {
     let any = false;
     TABS.forEach(tab => {
       const tabCards = getTabCards(tab.id).filter(c => c.status !== 'fait');
-      tabCards.sort((a, b) => {
-        if (a.urgent && !b.urgent) return -1;
-        if (!a.urgent && b.urgent) return 1;
-        return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
-      });
+      tabCards.sort(relevanceSort);
       if (tabCards.length === 0) return;
       any = true;
       const header = document.createElement('div');
@@ -920,15 +981,11 @@ function renderMobile() {
 
   let cards;
   if (currentTab === 'urgent') {
-    cards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
+    cards = data.cards.filter(c => (c.urgent || isRoutineDue(c) || isWoken(c)) && c.status !== 'fait');
   } else {
     cards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   }
-  cards.sort((a, b) => {
-    if (a.urgent && !b.urgent) return -1;
-    if (!a.urgent && b.urgent) return 1;
-    return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
-  });
+  cards.sort(relevanceSort);
 
   if (cards.length === 0) {
     list.innerHTML = '<div style="padding:24px 16px;color:var(--text2);font-size:.82rem;text-align:center">Aucune tache ici</div>';
@@ -943,7 +1000,9 @@ function buildMobileCard(card) {
   const isExpanded = expandedCardId === card.id;
 
   const el = document.createElement('div');
-  el.className = 'mobile-card' + (card.urgent ? ' urgent-card' : '');
+  const stale = daysSinceTouch(card);
+  const fadeCls = !isDone && !isSnoozed(card) ? (stale >= 60 ? ' card-faded-60' : stale >= 30 ? ' card-faded-30' : '') : '';
+  el.className = 'mobile-card' + (card.urgent ? ' urgent-card' : '') + (isSnoozed(card) ? ' card-snoozed' : '') + (isWoken(card) ? ' card-woken' : '') + fadeCls;
   el.dataset.id = card.id;
 
   // Tags HTML
@@ -953,6 +1012,9 @@ function buildMobileCard(card) {
     const cls = TAG_CLASSES[t.toLowerCase()] || 'tag-business';
     return `<span class="tag ${cls}">${esc(t)}</span>`;
   }).join('');
+  const ageTag = !isDone && stale >= 21 ? `<span class="tag tag-age">${stale} j</span>` : '';
+  const mobDueLine = !card.recurrence && card.dueDate ? `<div class="card-next-due${card.dueDate < todayStr() ? ' overdue' : ''}">Echeance : ${formatDueDate(card.dueDate)}</div>` : '';
+  const mobSnoozeLine = isSnoozed(card) ? `<div class="card-next-due">&#9208;&#65039; Reveil : ${formatDueDate(card.snoozeUntil)}</div>` : isWoken(card) ? `<div class="card-next-due overdue">&#9200; Reveillee - a traiter</div>` : '';
 
   el.innerHTML = `
     <div class="mobile-card-check${isDone ? ' done' : ''}" data-action="check">
@@ -960,9 +1022,10 @@ function buildMobileCard(card) {
     </div>
     <div class="mobile-card-body">
       <div class="mobile-card-title${isDone ? ' done-title' : ''}">${esc(card.title)}</div>
+      ${mobDueLine}${mobSnoozeLine}
       <div class="mobile-card-detail${isExpanded ? ' open' : ''}">
         ${card.desc ? `<div class="mobile-card-desc">${esc(card.desc)}</div>` : ''}
-        <div class="mobile-card-tags">${statusTag}${extraTagHtml}</div>
+        <div class="mobile-card-tags">${statusTag}${extraTagHtml}${ageTag}</div>
         <div class="mobile-card-actions">
           ${card.url ? `<a class="btn-go" href="${esc(card.url)}" target="_blank">Go &rarr;</a>` : ''}
           <button class="mobile-urgent-toggle${card.urgent ? ' is-urgent' : ''}" data-action="urgent">
@@ -1019,22 +1082,15 @@ function renderDesktop() {
   const board = document.getElementById('board');
   board.innerHTML = '';
 
-  // Sort: urgent first, then sortOrder
-  const sortCards = (a, b) => {
-    if (a.urgent && !b.urgent) return -1;
-    if (!a.urgent && b.urgent) return 1;
-    return (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
-  };
-
   // ALL tab — columns are categories (Urgent, MKTG, Business, Tech, Routine, Events)
   if (currentTab === 'all') {
     const allActive = data.cards.filter(c => c.status !== 'fait');
     const columns = [
-      { id:'urgent', icon:'🔴', title:'Urgent', filter: c => c.urgent || isRoutineDue(c) },
-      ...TABS.map(t => ({ id:t.id, icon:t.icon, title:t.title, filter: c => getCats(c).some(cat => t.cats.includes(cat)) && !(c.urgent || isRoutineDue(c)) }))
+      { id:'urgent', icon:'🔴', title:'Urgent', filter: c => c.urgent || isRoutineDue(c) || isWoken(c) },
+      ...TABS.map(t => ({ id:t.id, icon:t.icon, title:t.title, filter: c => getCats(c).some(cat => t.cats.includes(cat)) && !(c.urgent || isRoutineDue(c) || isWoken(c)) }))
     ];
     columns.forEach(col => {
-      const cards = allActive.filter(col.filter).sort(sortCards);
+      const cards = allActive.filter(col.filter).sort(relevanceSort);
       if (cards.length === 0) return;
       const div = document.createElement('div');
       div.className = 'column';
@@ -1059,7 +1115,7 @@ function renderDesktop() {
   // Filter cards by active tab
   let tabCards;
   if (currentTab === 'urgent') {
-    tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c)) && c.status !== 'fait');
+    tabCards = data.cards.filter(c => (c.urgent || isRoutineDue(c) || isWoken(c)) && c.status !== 'fait');
   } else {
     tabCards = getTabCards(currentTab).filter(c => c.status !== 'fait');
   }
@@ -1067,7 +1123,7 @@ function renderDesktop() {
   // Columns are statuses (kanban model)
   STATUSES.filter(s => s.id !== 'fait').forEach(col => {
     const cards = tabCards.filter(c => c.status === col.id);
-    cards.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
+    cards.sort(relevanceSort);
 
     if (cards.length === 0) return;
 
@@ -1096,11 +1152,13 @@ function markDone(cardId){
       card.nextDue=calcNextDue(card.recurrence, todayStr());
       card.status='a-faire';
       card.lastDoneAt=Date.now();
+      touch(card);
       save();render();
     });
   } else {
     showConfirm('Marquer "'+card.title+'" comme fait ?',()=>{
       card.status='fait';card.urgent=false;card.done=true;card.doneAt=Date.now();
+      delete card.snoozeUntil;touch(card);
       save();render();
     });
   }
@@ -1109,6 +1167,7 @@ function markDone(cardId){
 function toggleUrgent(cardId){
   const card=data.cards.find(c=>c.id===cardId);
   card.urgent=!card.urgent;
+  touch(card);
   save();render();
 }
 
@@ -1162,6 +1221,9 @@ function openModal(cardId){
   document.getElementById('fStatus').value=card.status;
   document.getElementById('fUrgent').checked=!!card.urgent;
   document.getElementById('fUrl').value=card.url||'';
+  document.getElementById('fDueDate').value=card.dueDate||'';
+  document.getElementById('fSnoozeUntil').value=card.snoozeUntil||'';
+  updateSnoozeField();
   // Recurrence
   if(card.recurrence){
     document.getElementById('fRecurFreq').value=card.recurrence.freq||'';
@@ -1197,12 +1259,15 @@ function openModalNew(tabOrGroup, statusOverride){
   document.getElementById('fUrl').value='';
   document.getElementById('fUrgent').checked=false;
   document.getElementById('fRecurFreq').value='';
+  document.getElementById('fDueDate').value='';
+  document.getElementById('fSnoozeUntil').value='';
   updateRecurFields();
   // Always pre-select the active tab's category
   setCatChecks([tab ? tab.id : currentTab]);
   showRecurrenceIfRoutine();
   // Status: use override (desktop column) or default 'a-faire'
   document.getElementById('fStatus').value = statusOverride || 'a-faire';
+  updateSnoozeField();
   document.getElementById('fClaudeContext').value='';
   document.getElementById('claudeCtxWrap').style.display='none';
   document.getElementById('modalBg').classList.add('open');
@@ -1236,6 +1301,15 @@ function saveCard(){
   const ctxRaw=document.getElementById('fClaudeContext').value.trim();
   if(ctxRaw){try{claudeContext=JSON.parse(ctxRaw)}catch(e){alert('Claude Context JSON invalide');return}}
 
+  // Due date (optional) + snooze date (required when a-surveiller)
+  const dueDate=document.getElementById('fDueDate').value||null;
+  const snoozeUntil=document.getElementById('fSnoozeUntil').value||null;
+  if(status==='a-surveiller'&&!snoozeUntil){
+    alert('Une carte "A surveiller" doit avoir une date de reveil.');
+    document.getElementById('fSnoozeUntil').focus();
+    return;
+  }
+
   if(editId){
     const card=data.cards.find(c=>c.id===+editId);
     card.title=title;card.desc=desc;card.tags=tags;card.url=url;
@@ -1243,12 +1317,17 @@ function saveCard(){
     card.status=status;card.urgent=urgent;
     card.done=status==='fait';
     if(status==='fait'&&!card.doneAt)card.doneAt=Date.now();
+    if(dueDate)card.dueDate=dueDate;else delete card.dueDate;
+    if(status==='a-surveiller')card.snoozeUntil=snoozeUntil;else delete card.snoozeUntil;
     if(recurrence){card.recurrence=recurrence;if(!card.nextDue)card.nextDue=calcNextDue(recurrence,todayStr())}
     else{delete card.recurrence;delete card.nextDue}
     if(claudeContext)card.claudeContext=claudeContext;else delete card.claudeContext;
+    touch(card);
   } else {
     const maxId=Math.max(0,...data.cards.map(c=>c.id));
-    const newCard={id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait'};
+    const newCard={id:maxId+1,title,desc,tags,url,categories:cats,status,urgent,done:status==='fait',createdAt:todayStr(),touchedAt:todayStr()};
+    if(dueDate)newCard.dueDate=dueDate;
+    if(status==='a-surveiller')newCard.snoozeUntil=snoozeUntil;
     if(recurrence){newCard.recurrence=recurrence;newCard.nextDue=todayStr()}
     if(claudeContext)newCard.claudeContext=claudeContext;
     data.cards.push(newCard);
@@ -1289,6 +1368,7 @@ function reorderCard(card,groupId,beforeCardId){
 
   // Assign sortOrder based on position
   group.forEach((c,i)=>c.sortOrder=i);
+  touch(card);
   save();render();
 }
 
@@ -1325,6 +1405,33 @@ function getCheckedCats(){
     if (tab) cats.push(tab.cats[0]);
   });
   return cats.length ? cats : ['business'];
+}
+
+function showSnoozePrompt(card,onPick,onCancel){
+  const bg=document.createElement('div');bg.className='confirm-bg';
+  bg.innerHTML=`<div class="confirm-box"><p>Surveiller "${esc(card.title)}" - reveil quand ?</p>
+    <div class="confirm-btns" style="flex-direction:column">
+      <button data-days="7">Dans 1 semaine</button>
+      <button data-days="14">Dans 2 semaines</button>
+      <button data-days="30">Dans 1 mois</button>
+      <input type="date" class="snz-date" style="padding:8px;border:1px solid var(--border);border-radius:6px;font:inherit">
+      <button class="confirm-no">Annuler</button>
+    </div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelectorAll('[data-days]').forEach(b=>b.addEventListener('click',()=>{
+    const d=addDays(todayStr(),+b.dataset.days);
+    bg.remove();onPick(d);
+  }));
+  bg.querySelector('.snz-date').addEventListener('change',e=>{
+    if(e.target.value){bg.remove();onPick(e.target.value)}
+  });
+  bg.querySelector('.confirm-no').addEventListener('click',()=>{bg.remove();if(onCancel)onCancel()});
+  bg.addEventListener('click',e=>{if(e.target===bg){bg.remove();if(onCancel)onCancel()}});
+}
+
+function updateSnoozeField(){
+  const isSurv=document.getElementById('fStatus').value==='a-surveiller';
+  document.getElementById('snoozeWrap').style.display=isSurv?'':'none';
 }
 
 function showConfirm(msg,onYes,onNo){
@@ -1410,6 +1517,7 @@ function startDrag(e,card,el,touchHeld){
     if(gid==='fait'){
       showConfirm('Marquer "'+cardRef.title+'" comme fait ?',()=>{
         cardRef.status='fait';cardRef.urgent=false;cardRef.done=true;cardRef.doneAt=Date.now();
+        delete cardRef.snoozeUntil;touch(cardRef);
         save();render();
       },()=>{render()});
       return;
@@ -1424,10 +1532,12 @@ function startDrag(e,card,el,touchHeld){
         reorderCard(cardRef,gid,neighborId);
       } else if(gid==='urgent'){
         cardRef.urgent=true;
+        touch(cardRef);
         save();render();
       } else if(tab){
         cardRef.categories=[tab.cats[0]];
         delete cardRef.category;
+        touch(cardRef);
         save();render();
       }
       return;
@@ -1436,8 +1546,16 @@ function startDrag(e,card,el,touchHeld){
     // Same status = reorder, different = change status
     if(cardRef.status===gid){
       reorderCard(cardRef,gid,neighborId);
+    } else if(gid==='a-surveiller'){
+      // Snooze obligatoire : demander la date de reveil
+      showSnoozePrompt(cardRef,date=>{
+        cardRef.status='a-surveiller';cardRef.snoozeUntil=date;touch(cardRef);
+        save();render();
+      },()=>render());
     } else {
       cardRef.status=gid;
+      delete cardRef.snoozeUntil;
+      touch(cardRef);
       save();render();
     }
   }
