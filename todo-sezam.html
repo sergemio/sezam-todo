@@ -75,6 +75,72 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .mobile-card.card-faded-60{opacity:.48}
 .mobile-card.card-snoozed{opacity:.55}
 .mobile-card.card-woken{background:#fff7e6}
+
+/* --- Focus du jour --- */
+/* 3 zones fixes : head (date+progress) / card-zone (carte centree) / actions+foot pinned bas.
+   Les boutons gardent une position constante quelle que soit la taille de la carte. */
+.jour-view{display:flex;flex-direction:column;height:100%;padding:18px 16px 84px;overflow:hidden}
+.jour-inner{flex:1;display:flex;flex-direction:column;width:100%;max-width:440px;margin:0 auto;min-height:0}
+/* tout ancre vers le bas : espace vide en haut, puis date, puis carte, puis boutons fixes */
+.jour-main{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
+.jour-head{flex-shrink:0;margin-bottom:12px}
+.jour-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.jour-date{font-size:.7rem;color:var(--text2);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.jour-count{font-size:.75rem;color:#6366f1;font-weight:700}
+.jour-nav{display:flex;align-items:center;gap:8px}
+.jour-back{background:#f3f4f6;border:none;color:#374151;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0 0 2px}
+.jour-back:active{transform:scale(.88)}
+.jour-progress{height:5px;background:#eef0f4;border-radius:3px;overflow:hidden}
+.jour-progress-fill{height:100%;background:#6366f1;border-radius:3px;transition:width .3s ease}
+.jour-card-zone{flex:0 1 auto;display:flex;min-height:0;overflow:visible;margin-bottom:16px}
+.jour-stack{position:relative;width:100%;display:flex}
+.jour-stack-bg1{position:absolute;top:14px;left:14px;right:14px;height:100%;background:#eef0f4;border-radius:16px}
+.jour-stack-bg2{position:absolute;top:7px;left:7px;right:7px;height:100%;background:#f7f8fa;border:1px solid #eee;border-radius:16px}
+.jour-card{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px 20px;box-shadow:0 6px 18px rgba(0,0,0,.08);animation:jourCardIn .32s cubic-bezier(.2,.8,.3,1);will-change:transform,opacity}
+@keyframes jourCardIn{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes jourOutUp{to{opacity:0;transform:translateY(-70px) scale(.9)}}
+@keyframes jourOutRight{to{opacity:0;transform:translateX(125%) rotate(9deg)}}
+@keyframes jourOutLeft{to{opacity:0;transform:translateX(-125%) rotate(-9deg)}}
+@keyframes jourOutDown{to{opacity:0;transform:translateY(72px) scale(.92)}}
+.jour-card.exit-done{animation:jourOutUp .34s cubic-bezier(.4,0,.6,1) forwards}
+.jour-card.exit-right{animation:jourOutRight .34s cubic-bezier(.4,0,.6,1) forwards}
+.jour-card.exit-left{animation:jourOutLeft .34s cubic-bezier(.4,0,.6,1) forwards}
+.jour-card.exit-down{animation:jourOutDown .34s cubic-bezier(.4,0,.6,1) forwards}
+.jour-actions.fading{opacity:0;transition:opacity .18s ease;pointer-events:none}
+.jour-card.kind-late{border-color:#fecaca}
+.jour-card.kind-woken{border-color:#fde68a}
+.jour-card.kind-urgent{border-color:#fca5a5}
+.jour-kind{flex-shrink:0;font-size:.65rem;font-weight:800;letter-spacing:.04em;margin-bottom:10px}
+.jour-kind.kind-late,.jour-kind.kind-urgent{color:#dc2626}
+.jour-kind.kind-woken{color:#b45309}
+.jour-kind.kind-due{color:#0369a1}
+.jour-kind.kind-routine{color:#6366f1}
+.jour-kind.kind-stale{color:#6b7280}
+.jour-scroll{flex:0 1 auto;min-height:0;max-height:46vh;overflow-y:auto}
+.jour-title{font-size:1.1rem;font-weight:800;color:#111;line-height:1.3}
+.jour-desc{font-size:.78rem;color:#4b5563;margin-top:8px;white-space:pre-wrap}
+.jour-context{font-size:.72rem;color:var(--text2);margin-top:10px;font-style:italic}
+.jour-go{flex-shrink:0;margin-top:12px}
+.jour-actions{flex-shrink:0;display:flex;flex-direction:column;gap:9px}
+.jour-btn{border:none;cursor:pointer;font:inherit;font-weight:700;border-radius:12px;padding:14px;font-size:.85rem;transition:.12s}
+.jour-btn:active{transform:scale(.97)}
+.jour-btn-done{background:#16a34a;color:#fff}
+.jour-btn-sec{background:#f3f4f6;color:#374151;flex:1;font-size:.74rem;font-weight:600;padding:13px 6px}
+.jour-btn-comment{background:#eef0ff;color:#4f46e5;flex:1;font-size:.74rem;font-weight:600;padding:13px 6px}
+.jour-btn-trash{background:#fee2e2;color:#b91c1c;flex:1;font-size:.74rem;font-weight:600;padding:13px 6px}
+.jour-row{display:flex;gap:8px}
+.jour-cmt-flag{flex-shrink:0;margin-top:10px;font-size:.7rem;color:#4f46e5;font-weight:600}
+.cmt-list{max-height:120px;overflow-y:auto;margin-bottom:10px;text-align:left}
+.cmt-old{font-size:.74rem;color:#4b5563;background:#f5f6fa;border-radius:8px;padding:7px 9px;margin-bottom:6px}
+.cmt-date{font-size:.62rem;color:#9ca3af;font-weight:700;display:block;margin-bottom:2px}
+.cmt-input{width:100%;min-height:90px;font:inherit;font-size:.85rem;border:1px solid var(--border);border-radius:10px;padding:10px;resize:vertical;box-sizing:border-box}
+.jour-foot{flex-shrink:0}
+.jour-done-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.jour-done-check{width:64px;height:64px;border-radius:50%;background:#dcfce7;color:#16a34a;font-size:2rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.jour-done-title{font-size:1.15rem;font-weight:800;color:#111}
+.jour-done-sub{font-size:.8rem;color:var(--text2);margin-top:6px}
+.jour-board-link{display:block;width:100%;text-align:center;margin-top:14px;font-size:.78rem;color:var(--text2);cursor:pointer;background:none;border:none;font-family:inherit;padding:6px}
+.jour-review-intro{flex-shrink:0;text-align:center;font-size:.8rem;color:var(--text2);margin-bottom:10px}
 .tab-badge{background:var(--accent);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700}
 .recurrence-fields{margin-top:8px;padding:10px;background:#f8f9fa;border-radius:8px;display:none}
 .recurrence-fields.visible{display:block}
@@ -563,6 +629,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
     <div class="mobile-list" id="mobileList"></div>
     <!-- Desktop board -->
     <div class="board" id="board"></div>
+    <!-- Focus du jour -->
+    <div class="jour-view" id="jourView" style="display:none"></div>
   </div>
 </div>
 
@@ -688,8 +756,15 @@ function getTabCards(tabId) {
 }
 
 let data;
-let currentTab = 'all'; // tab actif pour navigation mobile
+let currentTab = 'jour'; // l'app s'ouvre sur le Focus du jour
 let expandedCardId = null; // pour accordion mobile
+// Etat session du Focus du jour
+// Session Focus du jour : liste navigable + pointeur + historique d'annulation
+let jourMode = 'today';        // 'today' (urgent/echeances/routines) | 'extended' (les autres cartes)
+let jourList = null;           // tableau ordonne d'ids pour la passe en cours (null = a (re)construire)
+let jourPos = 0;               // index courant dans jourList
+let jourHistory = [];          // pile d'undo : {cardId, prev:{...champs}}
+let jourSeen = new Set();      // ids deja injectes dans une liste cette session (anti-doublon today/extended)
 function getCats(card){
   if(Array.isArray(card.categories))return card.categories;
   if(card.category)return[card.category];
@@ -830,8 +905,9 @@ function renderTabs() {
   if (!container) return;
   container.innerHTML = '';
 
-  // Build full list: All first, then Urgent, then categories or statuses
+  // Build full list: Jour first, then All, Urgent, then categories
   const allItems = [
+    { id:'jour', icon:'🎯', title:'Jour' },
     { id:'all', icon:'📋', title:'All' },
     { id:'urgent', icon:'🔴', title:'Urgent' },
     ...TABS
@@ -839,6 +915,7 @@ function renderTabs() {
 
   // Per-tab gradient colors for the glow effect
   const gradients = {
+    jour:     'radial-gradient(circle, rgba(99,102,241,.22) 0%, rgba(99,102,241,.08) 50%, rgba(99,102,241,0) 100%)',
     all:      'radial-gradient(circle, rgba(99,102,241,.18) 0%, rgba(99,102,241,.06) 50%, rgba(99,102,241,0) 100%)',
     urgent:   'radial-gradient(circle, rgba(220,38,38,.18) 0%, rgba(220,38,38,.06) 50%, rgba(220,38,38,0) 100%)',
     mktg:     'radial-gradient(circle, rgba(249,115,22,.18) 0%, rgba(234,88,12,.06) 50%, rgba(234,88,12,0) 100%)',
@@ -860,6 +937,10 @@ function renderTabs() {
       const n = countDueRoutines();
       if (n > 0) badge = `<span class="nav-badge">${n}</span>`;
     }
+    if (item.id === 'jour') {
+      const n = jourTodayIds().length;
+      if (n > 0) badge = `<span class="nav-badge">${n}</span>`;
+    }
     const grad = gradients[item.id] || 'radial-gradient(circle, rgba(99,102,241,.15) 0%, rgba(99,102,241,0) 100%)';
     btn.innerHTML = `
       <span class="nav-item-glow" style="background:${grad}"></span>
@@ -874,6 +955,7 @@ function renderTabs() {
       ${badge}
     `;
     btn.addEventListener('click', () => {
+      if (item.id === 'jour' && currentTab !== 'jour') jourResetSession();
       currentTab = item.id;
       expandedCardId = null;
       render();
@@ -944,6 +1026,15 @@ function buildCard(card,isMirror){
 function render() {
   updateStats();
   renderTabs();
+  const jv = document.getElementById('jourView');
+  if (currentTab === 'jour') {
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('mobileList').style.display = 'none';
+    jv.style.display = '';
+    renderJour();
+    return;
+  }
+  jv.style.display = 'none';
   if (window.innerWidth <= 700) {
     document.getElementById('board').style.display = 'none';
     document.getElementById('mobileList').style.display = '';
@@ -953,6 +1044,268 @@ function render() {
     document.getElementById('board').style.display = '';
     renderDesktop();
   }
+}
+
+// --- Focus du jour ---
+// File du jour : urgent / routine due / reveil echu / echeance arrivee
+function jourTodayIds(){
+  return data.cards
+    .filter(c=>c.status!=='fait'&&(c.urgent||isRoutineDue(c)||isWoken(c)||(c.dueDate&&c.dueDate<=todayStr())))
+    .sort(relevanceSort).map(c=>c.id);
+}
+// Autres cartes : tout le reste d'actif, hors cartes en veille (snooze futur) et hors deja vues cette session
+function jourExtendedIds(){
+  return data.cards
+    .filter(c=>c.status!=='fait'&&!isSnoozed(c)&&!jourSeen.has(c.id))
+    .sort(relevanceSort).map(c=>c.id);
+}
+function jourResetSession(){
+  jourMode='today'; jourList=null; jourPos=0; jourHistory=[]; jourSeen=new Set();
+}
+function jourStartExtended(){
+  jourMode='extended'; jourList=null; jourPos=0; jourHistory=[];
+  render();
+}
+function jourCurrentId(){ return (jourList&&jourPos<jourList.length)?jourList[jourPos]:null; }
+function jourSnap(card){
+  const s={};
+  ['status','urgent','done','doneAt','snoozeUntil','dueDate','nextDue','lastDoneAt','touchedAt'].forEach(k=>s[k]=card[k]);
+  s.comments=card.comments?JSON.parse(JSON.stringify(card.comments)):undefined;
+  return s;
+}
+function jourRestore(card,s){
+  ['status','urgent','done','doneAt','snoozeUntil','dueDate','nextDue','lastDoneAt','touchedAt','comments'].forEach(k=>{
+    if(s[k]===undefined)delete card[k]; else card[k]=s[k];
+  });
+}
+// Applique une mutation a la carte courante (avec animation), enregistre l'undo, avance d'une carte
+function jourAct(dir,mutate){
+  const card=data.cards.find(c=>c.id===jourCurrentId());
+  if(!card)return;
+  jourExit(dir,()=>{
+    jourHistory.push({cardId:card.id,prev:jourSnap(card)});
+    mutate(card);
+    jourPos++;
+    save();render();
+  });
+}
+function jourBack(){
+  if(jourPos<=0||!jourHistory.length)return;
+  const h=jourHistory.pop();
+  const card=data.cards.find(c=>c.id===h.cardId);
+  if(card)jourRestore(card,h.prev);
+  jourPos--;
+  save();render();
+}
+function jourKind(card){
+  if(card.recurrence&&isRoutineDue(card)&&card.nextDue<todayStr())return{cls:'kind-late',label:'&#128260; ROUTINE EN RETARD'};
+  if(isRoutineDue(card))return{cls:'kind-routine',label:'&#128260; ROUTINE DU JOUR'};
+  if(isWoken(card))return{cls:'kind-woken',label:'&#9200; REVEIL'};
+  if(card.urgent)return{cls:'kind-urgent',label:'&#128308; URGENT'};
+  return{cls:'kind-due',label:'&#128197; ECHEANCE'};
+}
+function jourContext(card){
+  const parts=[];
+  if(card.recurrence){
+    const f=card.recurrence.freq;
+    if(f==='daily')parts.push('Tous les jours');
+    if(f==='weekly')parts.push('Hebdo');
+    if(f==='monthly')parts.push('Mensuel, le '+card.recurrence.date);
+    if(card.nextDue&&card.nextDue<todayStr())parts.push('prevu le '+formatDueDate(card.nextDue));
+  }
+  if(!card.recurrence&&card.dueDate)parts.push('Echeance : '+formatDueDate(card.dueDate));
+  if(isWoken(card))parts.push('en veille depuis, reveil prevu '+formatDueDate(card.snoozeUntil));
+  const stale=daysSinceTouch(card);
+  if(stale>=21)parts.push('pas touchee depuis '+stale+' j');
+  return parts.join(' - ');
+}
+// Zone carte uniquement (les boutons sont rendus separement, en position fixe)
+function buildJourCardZone(card,kind,context){
+  return `
+    <div class="jour-card-zone">
+      <div class="jour-stack">
+        <div class="jour-stack-bg1"></div>
+        <div class="jour-stack-bg2"></div>
+        <div class="jour-card ${kind.cls}">
+          <div class="jour-kind ${kind.cls}">${kind.label}</div>
+          <div class="jour-scroll">
+            <div class="jour-title">${esc(card.title)}</div>
+            ${card.desc?`<div class="jour-desc">${esc(card.desc)}</div>`:''}
+            ${context?`<div class="jour-context">${context}</div>`:''}
+          </div>
+          ${card.comments&&card.comments.length?`<div class="jour-cmt-flag">&#128172; ${card.comments.length} note${card.comments.length>1?'s':''}</div>`:''}
+          ${card.url?`<div class="jour-go"><a class="btn-go" href="${esc(card.url)}" target="_blank">Go &rarr;</a></div>`:''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderJour(){
+  const jv=document.getElementById('jourView');
+  // (re)construction de la liste de la passe en cours
+  if(jourList===null){
+    jourList = jourMode==='extended' ? jourExtendedIds() : jourTodayIds();
+    jourList.forEach(id=>jourSeen.add(id));
+    jourPos=0; jourHistory=[];
+  }
+  const boardLink=`<div class="jour-foot"><button class="jour-board-link" onclick="currentTab='all';render()">Tout le board &rarr;</button></div>`;
+
+  // passe terminee ?
+  if(jourPos>=jourList.length){ renderJourDone(jv); return; }
+
+  // carte courante (sauter les ids disparus)
+  let card=data.cards.find(c=>c.id===jourList[jourPos]);
+  if(!card){ jourPos++; renderJour(); return; }
+
+  const total=jourList.length;
+  const pct=Math.round(jourPos/total*100);
+  const kind=jourKind(card);
+  const backBtn = jourPos>0 ? `<button class="jour-back" onclick="jourBack()" title="Carte precedente">&#8249;</button>` : '';
+  const headLabel = jourMode==='extended' ? 'AUTRES CARTES' : formatDueDate(todayStr());
+
+  jv.innerHTML=`<div class="jour-inner">
+    <div class="jour-main">
+      <div class="jour-head">
+        <div class="jour-top">
+          <span class="jour-date">${headLabel}</span>
+          <span class="jour-nav">${backBtn}<span class="jour-count">${jourPos+1} / ${total}</span></span>
+        </div>
+        <div class="jour-progress"><div class="jour-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${buildJourCardZone(card,kind,jourContext(card))}
+    </div>
+    <div class="jour-actions">
+      <button class="jour-btn jour-btn-done" onclick="jourDone()">&#10003; Fait</button>
+      <div class="jour-row">
+        <button class="jour-btn jour-btn-sec" onclick="jourReport()">&#9200; Reporter</button>
+        <button class="jour-btn jour-btn-comment" onclick="jourComment()">&#128172; Commentaire</button>
+        <button class="jour-btn jour-btn-sec" onclick="jourPass()">Passer &rarr;</button>
+      </div>
+    </div>
+    ${boardLink}
+  </div>`;
+}
+function renderJourDone(jv){
+  let extraBtn='';
+  if(jourMode!=='extended'){
+    const n=jourExtendedIds().length;
+    if(n>0) extraBtn=`<button class="jour-btn jour-btn-done" style="margin-top:20px;max-width:300px" onclick="jourStartExtended()">Traiter les autres cartes (${n}) &rarr;</button>`;
+  }
+  const title = jourMode==='extended' ? 'Revue terminee' : 'Tout est propre';
+  const sub = jourMode==='extended' ? 'Tu as fait le tour des autres cartes.' : "Rien d'autre d'urgent aujourd'hui.";
+  jv.innerHTML=`<div class="jour-inner"><div class="jour-done-screen">
+    <div class="jour-done-check">&#10003;</div>
+    <div class="jour-done-title">${title}</div>
+    <div class="jour-done-sub">${sub}</div>
+    ${extraBtn}
+    <button class="jour-board-link" onclick="currentTab='all';render()">Tout le board &rarr;</button>
+  </div></div>`;
+}
+// Joue l'animation de sortie de la carte courante puis execute apply()
+function jourExit(dir,apply){
+  const cardEl=document.querySelector('#jourView .jour-card');
+  const actions=document.querySelector('#jourView .jour-actions');
+  if(!cardEl){apply();return;}
+  if(actions)actions.classList.add('fading');
+  cardEl.classList.add('exit-'+dir);
+  let done=false;
+  const finish=()=>{if(done)return;done=true;apply();};
+  cardEl.addEventListener('animationend',finish,{once:true});
+  setTimeout(finish,420); // fallback si animationend ne tire pas
+}
+function jourDone(){
+  jourAct('done',card=>{
+    if(card.recurrence){
+      card.nextDue=calcNextDue(card.recurrence,todayStr());
+      card.status='a-faire';
+      card.lastDoneAt=Date.now();
+    } else {
+      card.status='fait';card.urgent=false;card.done=true;card.doneAt=Date.now();
+      delete card.snoozeUntil;
+    }
+    touch(card);
+  });
+}
+function jourReport(){
+  const card=data.cards.find(c=>c.id===jourCurrentId());
+  if(!card)return;
+  showReportPrompt(card,date=>{
+    jourAct('right',c=>{
+      if(c.recurrence){
+        c.nextDue=date;
+        c.status='a-faire';
+      } else {
+        c.status='a-surveiller';
+        c.snoozeUntil=date;
+        c.urgent=false;
+        if(c.dueDate&&c.dueDate<date)c.dueDate=date;
+      }
+      touch(c);
+    });
+  });
+}
+function jourPass(){
+  jourAct('left',()=>{ /* aucune modification : on avance simplement */ });
+}
+// Commentaire : annote la fiche (champ Firebase `comments`) sans la modifier autrement, puis passe a la suivante.
+// Sert au futur traitement IA quotidien (lecture des notes -> propositions de modif).
+function jourComment(){
+  const card=data.cards.find(c=>c.id===jourCurrentId());
+  if(!card)return;
+  showCommentPrompt(card,txt=>{
+    jourAct('down',c=>{
+      if(!Array.isArray(c.comments))c.comments=[];
+      c.comments.push({at:todayStr(),text:txt});
+      touch(c);
+    });
+  });
+}
+function showCommentPrompt(card,onSave,onCancel){
+  const existing=(card.comments||[]).map(c=>
+    `<div class="cmt-old"><span class="cmt-date">${c.at?formatDueDate(c.at):''}</span>${esc(c.text)}</div>`
+  ).join('');
+  const bg=document.createElement('div');bg.className='confirm-bg';
+  bg.innerHTML=`<div class="confirm-box" style="text-align:left;max-width:380px">
+    <p style="text-align:center">&#128172; Commentaire</p>
+    <div style="font-size:.82rem;font-weight:700;color:#111;margin-bottom:10px;text-align:center">${esc(card.title)}</div>
+    ${existing?`<div class="cmt-list">${existing}</div>`:''}
+    <textarea class="cmt-input" placeholder="Dicte ou ecris ta note pour traiter cette fiche plus tard (changer le titre, la deadline, l'approche...)"></textarea>
+    <div class="confirm-btns" style="margin-top:12px">
+      <button class="confirm-no">Annuler</button>
+      <button class="confirm-yes">Valider</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  const ta=bg.querySelector('.cmt-input');
+  setTimeout(()=>ta.focus(),60);
+  bg.querySelector('.confirm-yes').addEventListener('click',()=>{
+    const txt=ta.value.trim();
+    bg.remove();
+    if(txt)onSave(txt);else if(onCancel)onCancel();
+  });
+  bg.querySelector('.confirm-no').addEventListener('click',()=>{bg.remove();if(onCancel)onCancel()});
+  bg.addEventListener('click',e=>{if(e.target===bg){bg.remove();if(onCancel)onCancel()}});
+}
+function showReportPrompt(card,onPick,onCancel){
+  const bg=document.createElement('div');bg.className='confirm-bg';
+  bg.innerHTML=`<div class="confirm-box"><p>Reporter "${esc(card.title)}" a quand ?</p>
+    <div class="confirm-btns" style="flex-direction:column">
+      <button data-days="1">Demain</button>
+      <button data-days="3">Dans 3 jours</button>
+      <button data-days="7">Dans 1 semaine</button>
+      <input type="date" class="snz-date" style="padding:8px;border:1px solid var(--border);border-radius:6px;font:inherit">
+      <button class="confirm-no">Annuler</button>
+    </div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelectorAll('[data-days]').forEach(b=>b.addEventListener('click',()=>{
+    const d=addDays(todayStr(),+b.dataset.days);
+    bg.remove();onPick(d);
+  }));
+  bg.querySelector('.snz-date').addEventListener('change',e=>{
+    if(e.target.value){bg.remove();onPick(e.target.value)}
+  });
+  bg.querySelector('.confirm-no').addEventListener('click',()=>{bg.remove();if(onCancel)onCancel()});
+  bg.addEventListener('click',e=>{if(e.target===bg){bg.remove();if(onCancel)onCancel()}});
 }
 
 function renderMobile() {
@@ -1236,7 +1589,9 @@ function openModal(cardId){
   showRecurrenceIfRoutine();
   // Claude Context
   if(card.claudeContext){
-    document.getElementById('fClaudeContext').value=JSON.stringify(card.claudeContext,null,2);
+    const cc=card.claudeContext;
+    const onlyNotes=cc&&typeof cc==='object'&&Object.keys(cc).length===1&&'notes' in cc;
+    document.getElementById('fClaudeContext').value=onlyNotes?cc.notes:JSON.stringify(cc,null,2);
     document.getElementById('claudeCtxWrap').style.display='none';
   } else {
     document.getElementById('fClaudeContext').value='';
@@ -1299,7 +1654,10 @@ function saveCard(){
   // Parse Claude Context
   let claudeContext=null;
   const ctxRaw=document.getElementById('fClaudeContext').value.trim();
-  if(ctxRaw){try{claudeContext=JSON.parse(ctxRaw)}catch(e){alert('Claude Context JSON invalide');return}}
+  if(ctxRaw){
+    try{claudeContext=JSON.parse(ctxRaw)}
+    catch(e){claudeContext={notes:ctxRaw}} // texte libre accepte (plus de blocage JSON)
+  }
 
   // Due date (optional) + snooze date (required when a-surveiller)
   const dueDate=document.getElementById('fDueDate').value||null;
