@@ -694,7 +694,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
         <input type="date" id="fDueDate">
       </div>
       <div id="snoozeWrap" style="display:none">
-        <label>Reveil (obligatoire)</label>
+        <label>En veille jusqu'au (obligatoire)</label>
         <input type="date" id="fSnoozeUntil">
       </div>
     </div>
@@ -1008,7 +1008,7 @@ function buildCard(card,isMirror){
   const originLabel=isMirror?`<div class="card-origin">${cats.map(cid=>(CATEGORIES.find(c=>c.id===cid)||{}).title||'').join(', ')} · ${esc((st||{}).title||'')}</div>`:'';
   const nextDueLabel=card.recurrence&&card.nextDue?`<div class="card-next-due">Prochain : ${formatDueDate(card.nextDue)}</div>`:'';
   const dueLabel=!card.recurrence&&card.dueDate?`<div class="card-next-due${card.dueDate<todayStr()?' overdue':''}">Echeance : ${formatDueDate(card.dueDate)}</div>`:'';
-  const snoozeLabel=isSnoozed(card)?`<div class="card-next-due">&#9208;&#65039; Reveil : ${formatDueDate(card.snoozeUntil)}</div>`:isWoken(card)?`<div class="card-next-due overdue">&#9200; Reveillee - a traiter</div>`:'';
+  const snoozeLabel=isSnoozed(card)?`<div class="card-next-due">&#9208;&#65039; En veille jusqu'au ${formatDueDate(card.snoozeUntil)}</div>`:isWoken(card)?`<div class="card-next-due overdue">&#9200; Rappel - a traiter</div>`:'';
 
   c.innerHTML=`
     ${doneBtn}${!isMirror?urgentBtn:''}
@@ -1116,7 +1116,7 @@ function jourChips(card){
   const chips=[];
   if(card.urgent) chips.push({cls:'chip-urgent',label:'&#128308; Urgent'});
   if(card.recurrence) chips.push({cls:'chip-routine',label:'&#128260; Routine'});
-  if(isWoken(card)) chips.push({cls:'chip-woken',label:'&#9200; Reveillee'});
+  if(isWoken(card)) chips.push({cls:'chip-woken',label:'&#9200; Rappel'});
   const lateRec = card.recurrence && card.nextDue && card.nextDue<T;
   const lateDue = !card.recurrence && card.dueDate && card.dueDate<T;
   if(lateRec||lateDue) chips.push({cls:'chip-late',label:'&#9888;&#65039; En retard'});
@@ -1138,8 +1138,8 @@ function jourDateLine(card){
     if(card.dueDate<T) return {txt:'En retard depuis le '+formatDueDate(card.dueDate),over:true};
     return {txt:'A faire avant : '+formatDueDate(card.dueDate),over:false};
   }
-  if(isWoken(card)) return {txt:'Reveil demande le '+formatDueDate(card.snoozeUntil),over:false};
-  if(isSnoozed(card)) return {txt:'Reveil : '+formatDueDate(card.snoozeUntil),over:false};
+  if(isWoken(card)) return {txt:'Rappel : '+formatDueDate(card.snoozeUntil),over:false};
+  if(isSnoozed(card)) return {txt:'En veille jusqu\'au '+formatDueDate(card.snoozeUntil),over:false};
   return null;
 }
 // Classe d'emphase de la carte (bordure/fond) selon l'etat le plus important
@@ -1402,7 +1402,7 @@ function buildMobileCard(card) {
   }).join('');
   const ageTag = !isDone && stale >= 21 ? `<span class="tag tag-age">${stale} j</span>` : '';
   const mobDueLine = !card.recurrence && card.dueDate ? `<div class="card-next-due${card.dueDate < todayStr() ? ' overdue' : ''}">Echeance : ${formatDueDate(card.dueDate)}</div>` : '';
-  const mobSnoozeLine = isSnoozed(card) ? `<div class="card-next-due">&#9208;&#65039; Reveil : ${formatDueDate(card.snoozeUntil)}</div>` : isWoken(card) ? `<div class="card-next-due overdue">&#9200; Reveillee - a traiter</div>` : '';
+  const mobSnoozeLine = isSnoozed(card) ? `<div class="card-next-due">&#9208;&#65039; En veille jusqu'au ${formatDueDate(card.snoozeUntil)}</div>` : isWoken(card) ? `<div class="card-next-due overdue">&#9200; Rappel - a traiter</div>` : '';
 
   el.innerHTML = `
     <div class="mobile-card-check${isDone ? ' done' : ''}" data-action="check">
@@ -1698,7 +1698,7 @@ function saveCard(){
   const dueDate=document.getElementById('fDueDate').value||null;
   const snoozeUntil=document.getElementById('fSnoozeUntil').value||null;
   if(status==='a-surveiller'&&!snoozeUntil){
-    alert('Une carte "A surveiller" doit avoir une date de reveil.');
+    alert('Une carte "A surveiller" doit avoir une date de reprise (rappel).');
     document.getElementById('fSnoozeUntil').focus();
     return;
   }
@@ -1802,7 +1802,7 @@ function getCheckedCats(){
 
 function showSnoozePrompt(card,onPick,onCancel){
   const bg=document.createElement('div');bg.className='confirm-bg';
-  bg.innerHTML=`<div class="confirm-box"><p>Surveiller "${esc(card.title)}" - reveil quand ?</p>
+  bg.innerHTML=`<div class="confirm-box"><p>Mettre "${esc(card.title)}" en veille - rappel quand ?</p>
     <div class="confirm-btns" style="flex-direction:column">
       <button data-days="7">Dans 1 semaine</button>
       <button data-days="14">Dans 2 semaines</button>
