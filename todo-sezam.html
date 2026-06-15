@@ -107,11 +107,24 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .jour-card.exit-left{animation:jourOutLeft .34s cubic-bezier(.4,0,.6,1) forwards}
 .jour-card.exit-down{animation:jourOutDown .34s cubic-bezier(.4,0,.6,1) forwards}
 .jour-actions.fading{opacity:0;transition:opacity .18s ease;pointer-events:none}
-.jour-card.kind-late{border-color:#fecaca}
+.jour-card.kind-late{border-color:#dc2626;border-width:2px;background:#fff6f6;box-shadow:0 0 0 3px rgba(220,38,38,.12),0 6px 18px rgba(0,0,0,.08)}
 .jour-card.kind-woken{border-color:#fde68a}
 .jour-card.kind-urgent{border-color:#fca5a5}
 .jour-kind{flex-shrink:0;font-size:.65rem;font-weight:800;letter-spacing:.04em;margin-bottom:10px}
-.jour-kind.kind-late,.jour-kind.kind-urgent{color:#dc2626}
+.jour-kind.kind-urgent{color:#dc2626}
+.jour-kind.kind-late{display:inline-block;background:#dc2626;color:#fff;padding:3px 9px;border-radius:7px;letter-spacing:.03em}
+/* Pastilles cumulables (POURQUOI la carte est la) + ligne date etiquetee */
+.jour-chips{flex-shrink:0;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.jour-chip{font-size:.6rem;font-weight:800;letter-spacing:.02em;padding:3px 8px;border-radius:7px;text-transform:uppercase}
+.chip-urgent{background:#fee2e2;color:#dc2626}
+.chip-routine{background:#eef0ff;color:#4f46e5}
+.chip-woken{background:#fef3c7;color:#b45309}
+.chip-late{background:#dc2626;color:#fff}
+.chip-due{background:#e0f2fe;color:#0369a1}
+.chip-neutral{background:#eef0f4;color:#6b7280}
+.jour-dateline{flex-shrink:0;font-size:.72rem;color:var(--text2);margin-top:10px}
+.jour-dateline .ico{margin-right:4px}
+.jour-dateline.overdue{color:#dc2626;font-weight:700}
 .jour-kind.kind-woken{color:#b45309}
 .jour-kind.kind-due{color:#0369a1}
 .jour-kind.kind-routine{color:#6366f1}
@@ -808,7 +821,7 @@ function formatDueDate(dateStr){
   const d=new Date(dateStr+'T00:00:00');
   const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const months=['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aout','Sep','Oct','Nov','Dec'];
-  return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+  return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
 }
 function updateRecurFields(){
   const freq=document.getElementById('fRecurFreq').value;
@@ -1097,42 +1110,65 @@ function jourBack(){
   jourPos--;
   save();render();
 }
-function jourKind(card){
-  if(card.recurrence&&isRoutineDue(card)&&card.nextDue<todayStr())return{cls:'kind-late',label:'&#128260; ROUTINE EN RETARD'};
-  if(isRoutineDue(card))return{cls:'kind-routine',label:'&#128260; ROUTINE DU JOUR'};
-  if(isWoken(card))return{cls:'kind-woken',label:'&#9200; REVEIL'};
-  if(card.urgent)return{cls:'kind-urgent',label:'&#128308; URGENT'};
-  return{cls:'kind-due',label:'&#128197; ECHEANCE'};
-}
-function jourContext(card){
-  const parts=[];
-  if(card.recurrence){
-    const f=card.recurrence.freq;
-    if(f==='daily')parts.push('Tous les jours');
-    if(f==='weekly')parts.push('Hebdo');
-    if(f==='monthly')parts.push('Mensuel, le '+card.recurrence.date);
-    if(card.nextDue&&card.nextDue<todayStr())parts.push('prevu le '+formatDueDate(card.nextDue));
+// POURQUOI cette carte est dans la file : pastilles cumulables (type + etat)
+function jourChips(card){
+  const T=todayStr();
+  const chips=[];
+  if(card.urgent) chips.push({cls:'chip-urgent',label:'&#128308; Urgent'});
+  if(card.recurrence) chips.push({cls:'chip-routine',label:'&#128260; Routine'});
+  if(isWoken(card)) chips.push({cls:'chip-woken',label:'&#9200; Reveillee'});
+  const lateRec = card.recurrence && card.nextDue && card.nextDue<T;
+  const lateDue = !card.recurrence && card.dueDate && card.dueDate<T;
+  if(lateRec||lateDue) chips.push({cls:'chip-late',label:'&#9888;&#65039; En retard'});
+  else if(!card.recurrence && card.dueDate) chips.push({cls:'chip-due',label:'&#128197; Echeance'});
+  if(!chips.length){
+    const st=(STATUSES.find(s=>s.id===card.status)||{}).title||'A traiter';
+    chips.push({cls:'chip-neutral',label:esc(st)});
   }
-  if(!card.recurrence&&card.dueDate)parts.push('Echeance : '+formatDueDate(card.dueDate));
-  if(isWoken(card))parts.push('en veille depuis, reveil prevu '+formatDueDate(card.snoozeUntil));
-  const stale=daysSinceTouch(card);
-  if(stale>=21)parts.push('pas touchee depuis '+stale+' j');
-  return parts.join(' - ');
+  return chips;
+}
+// LA DATE : une seule ligne, toujours etiquetee clairement
+function jourDateLine(card){
+  const T=todayStr();
+  if(card.recurrence && card.nextDue){
+    if(card.nextDue<T) return {txt:'En retard depuis le '+formatDueDate(card.nextDue),over:true};
+    return {txt:'Prochaine : '+formatDueDate(card.nextDue),over:false};
+  }
+  if(!card.recurrence && card.dueDate){
+    if(card.dueDate<T) return {txt:'En retard depuis le '+formatDueDate(card.dueDate),over:true};
+    return {txt:'A faire avant : '+formatDueDate(card.dueDate),over:false};
+  }
+  if(isWoken(card)) return {txt:'Reveil demande le '+formatDueDate(card.snoozeUntil),over:false};
+  if(isSnoozed(card)) return {txt:'Reveil : '+formatDueDate(card.snoozeUntil),over:false};
+  return null;
+}
+// Classe d'emphase de la carte (bordure/fond) selon l'etat le plus important
+function jourPrimaryClass(card){
+  const T=todayStr();
+  const lateRec=card.recurrence&&card.nextDue&&card.nextDue<T;
+  const lateDue=!card.recurrence&&card.dueDate&&card.dueDate<T;
+  if(lateRec||lateDue) return 'kind-late';
+  if(card.urgent) return 'kind-urgent';
+  if(isWoken(card)) return 'kind-woken';
+  return '';
 }
 // Zone carte uniquement (les boutons sont rendus separement, en position fixe)
-function buildJourCardZone(card,kind,context){
+function buildJourCardZone(card){
+  const chips=jourChips(card).map(c=>`<span class="jour-chip ${c.cls}">${c.label}</span>`).join('');
+  const dl=jourDateLine(card);
+  const primary=jourPrimaryClass(card);
   return `
     <div class="jour-card-zone">
       <div class="jour-stack">
         <div class="jour-stack-bg1"></div>
         <div class="jour-stack-bg2"></div>
-        <div class="jour-card ${kind.cls}">
-          <div class="jour-kind ${kind.cls}">${kind.label}</div>
+        <div class="jour-card ${primary}">
+          <div class="jour-chips">${chips}</div>
           <div class="jour-scroll">
             <div class="jour-title">${esc(card.title)}</div>
             ${card.desc?`<div class="jour-desc">${esc(card.desc)}</div>`:''}
-            ${context?`<div class="jour-context">${context}</div>`:''}
           </div>
+          ${dl?`<div class="jour-dateline${dl.over?' overdue':''}"><span class="ico">&#128197;</span>${dl.txt}</div>`:''}
           ${card.comments&&card.comments.length?`<div class="jour-cmt-flag">&#128172; ${card.comments.length} note${card.comments.length>1?'s':''}</div>`:''}
           ${card.url?`<div class="jour-go"><a class="btn-go" href="${esc(card.url)}" target="_blank">Go &rarr;</a></div>`:''}
         </div>
@@ -1159,7 +1195,6 @@ function renderJour(){
 
   const total=jourList.length;
   const pct=Math.round(jourPos/total*100);
-  const kind=jourKind(card);
   const backBtn = jourPos>0 ? `<button class="jour-back" onclick="jourBack()" title="Carte precedente">&#8249;</button>` : '';
   const headLabel = jourMode==='extended' ? 'AUTRES CARTES' : formatDueDate(todayStr());
 
@@ -1172,7 +1207,7 @@ function renderJour(){
         </div>
         <div class="jour-progress"><div class="jour-progress-fill" style="width:${pct}%"></div></div>
       </div>
-      ${buildJourCardZone(card,kind,jourContext(card))}
+      ${buildJourCardZone(card)}
     </div>
     <div class="jour-actions">
       <button class="jour-btn jour-btn-done" onclick="jourDone()">&#10003; Fait</button>
@@ -1548,7 +1583,7 @@ function setAppDate(){
   const now=new Date();
   const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const months=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
-  el.textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+  el.textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${String(now.getFullYear()).slice(2)}`;
 }
 
 function scrollToCol(target){
